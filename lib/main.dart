@@ -35,7 +35,7 @@ class Clean237App extends StatelessWidget {
           seedColor: CleanCouleurs.vertEco,
           primary: CleanCouleurs.vertEco,
         ),
-        useMaterialDesign: true,
+        useMaterial3: true,
         fontFamily: 'Segoe UI',
       ),
       

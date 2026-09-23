@@ -31,4 +31,4 @@ flutter:
 
   # 🎯 DÉCLARATION DU LOGO : Indique à Flutter d'inclure votre image officielle dans les paquets compilés
   assets:
-    - assets/logo.png
+    - assets/logo.jpeg
