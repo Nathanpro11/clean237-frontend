@@ -131,7 +131,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                   const SizedBox(height: 18),
 
                   _buildLabel('Confirmer le mot de passe'),
-                  TextFormField(controller: _confirmPasswordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outline), validator: (v) => (v != _passwordController.text) ? 'Mots de passe différents' : null),
+                  TextFormField(controller: _confirmPasswordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outlined), validator: (v) => (v != _passwordController.text) ? 'Mots de passe différents' : null),
                   const SizedBox(height: 20),
 
                   Row(
