@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+// ✅ REMPLACEZ LES ANCIENS IMPORTS DE 'core' PAR CEUX-CI DANS VOS CONTROLLERS :
+import 'package:clean237_frontend/utils/api_client.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
-import 'package:clean237_frontend/core/utils/api_client.dart';
+import 'package:clean237_frontend/features/utilisateur/models/log_model.dart';
+
 
 class AuthController extends ChangeNotifier {
   final String _endpointUrl = '${ApiClient.baseUrl}/utilisateurs';
