@@ -150,11 +150,16 @@ class ProfilScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        leading: const Icon(Icons.lock_outline, color: CleanCouleurs.anthracite),
-        title: const Text('Changer le mot de passe', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () => _ouvrirDialogueChangerMotDePasse(context),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: const Icon(Icons.lock_outline, color: CleanCouleurs.anthracite),
+          title: const Text('Changer le mot de passe', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          onTap: () => _ouvrirDialogueChangerMotDePasse(context),
+        ),
       ),
     );
   }
