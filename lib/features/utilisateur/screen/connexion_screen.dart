@@ -1,5 +1,5 @@
-import 'package:clean237_frontend/features/utilisateur/dashboard/screen/accueil_screen.dart';
-import 'package:clean237_frontend/features/utilisateur/dashboard/screen/dashboard_screen.dart';
+import 'package:clean237_frontend/features/dashboard/screen/accueil_screen.dart';
+import 'package:clean237_frontend/features/dashboard/screen/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
