@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
-import 'package:clean237_frontend/shared/widgets/sidebar_menu.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 
 /// Dashboard polymorphique : affiche la ou les sections adaptées au rôle
 /// de l'utilisateur connecté (Admin / Agent terrain / Citoyen).

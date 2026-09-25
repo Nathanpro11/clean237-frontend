@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/connexion_screen.dart';
-import 'package:clean237_frontend/shared/widgets/clean_bottom_nav.dart';
-import 'package:clean237_frontend/shared/widgets/sidebar_menu.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 
 /// Écran Profil (module Utilisateur) : consultation et modification
 /// des informations de base, changement de mot de passe, déconnexion.

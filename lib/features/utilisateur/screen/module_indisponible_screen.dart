@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
-import 'package:clean237_frontend/shared/widgets/clean_bottom_nav.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 
 /// Écran générique affiché pour les modules développés par d'autres membres
 /// de l'équipe (Collectes, Signaler...) et pas encore intégrés dans cette branche.

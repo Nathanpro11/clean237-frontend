@@ -1,8 +1,8 @@
-import 'package:clean237_frontend/features/dashboard/screen/accueil_screen.dart';
-import 'package:clean237_frontend/features/historique/screen/historique_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
-import 'package:clean237_frontend/shared/screen/module_indisponible_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/module_indisponible_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/profil_screen.dart';
 
 /// Barre de navigation commune à tous les écrans principaux :

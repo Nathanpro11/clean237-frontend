@@ -1,4 +1,4 @@
-import 'package:clean237_frontend/features/historique/screen/historique_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
