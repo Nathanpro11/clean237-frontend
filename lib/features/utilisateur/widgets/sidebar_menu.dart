@@ -30,14 +30,14 @@ class SidebarMenu extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: CleanCouleurs.vertEco,
-                          borderRadius: BorderRadius.circular(8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/logo.jpeg',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.cover,
                         ),
-                        child: const Icon(Icons.eco, color: Colors.white, size: 16),
                       ),
                       const SizedBox(width: 8),
                       const Text(

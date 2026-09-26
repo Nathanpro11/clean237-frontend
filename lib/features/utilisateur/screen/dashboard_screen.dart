@@ -1,8 +1,8 @@
+import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
-import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 
 /// Dashboard polymorphique : affiche la ou les sections adaptées au rôle
 /// de l'utilisateur connecté (Admin / Agent terrain / Citoyen).
@@ -27,14 +27,14 @@ class DashboardScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: CleanCouleurs.anthracite),
         title: Row(
           children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: CleanCouleurs.vertEco,
-                borderRadius: BorderRadius.circular(8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/logo.jpeg',
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
               ),
-              child: const Icon(Icons.eco, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 8),
             const Text(

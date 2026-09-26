@@ -1,8 +1,9 @@
+import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
-import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 
 /// Écran d'accueil (vue Citoyen), basé sur la maquette "ecran-accueil".
 /// Les missions du jour sont pour l'instant des données FACTICES (mock),
@@ -45,6 +46,7 @@ class AccueilScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: CleanCouleurs.grisFond,
+      drawer: const SidebarMenu(),
       body: SafeArea(
         child: Column(
           children: [
@@ -85,21 +87,27 @@ class AccueilScreen extends StatelessWidget {
 
   Widget _buildEnTete(String nom) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       color: CleanCouleurs.blancPur,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: CleanCouleurs.vertEco,
-                  borderRadius: BorderRadius.circular(8),
+              Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: CleanCouleurs.anthracite),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
-                child: const Icon(Icons.eco, color: Colors.white, size: 18),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/logo.jpeg',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                ),
               ),
               const SizedBox(width: 8),
               const Text(
