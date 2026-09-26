@@ -6,6 +6,7 @@ import 'package:clean237_frontend/features/utilisateur/controller/auth_controlle
 import 'package:clean237_frontend/features/utilisateur/screen/inscription_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
 
 class ConnexionScreen extends StatefulWidget {
   const ConnexionScreen({super.key});
@@ -65,84 +66,88 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
         child: Center(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.06,
               vertical: 16.0,
             ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.asset(
-                          'assets/logo.jpeg',
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.cover,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            'assets/logo.jpeg',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Clean237',
-                        style: TextStyle(
-                          color: CleanCouleurs.anthracite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.3,
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Clean237',
+                          style: TextStyle(
+                            color: CleanCouleurs.anthracite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.3,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 45),
-                  const Text(
-                    'Connexion',
-                    style: TextStyle(
-                      color: CleanCouleurs.anthracite,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Heureux de vous revoir ! Connectez-vous.',
-                    style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 14),
-                  ),
-                  const SizedBox(height: 40),
-                  if (authCtrl.messageErreur != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: CleanCouleurs.rougeAlerte.withOpacity(0.08),
-                        border: Border.all(
-                          color: CleanCouleurs.rougeAlerte,
-                          width: 1.2,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        authCtrl.messageErreur!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: CleanCouleurs.rougeAlerte,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
+                    const SizedBox(height: 32),
+                    const AuthToggleTabs(estConnexionActive: true),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Connexion',
+                      style: TextStyle(
+                        color: CleanCouleurs.anthracite,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                  const Text(
-                    'Adresse Email',
-                    style: TextStyle(
-                      color: CleanCouleurs.anthracite,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Heureux de vous revoir ! Connectez-vous.',
+                      style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 14),
+                    ),
+                    const SizedBox(height: 40),
+                    if (authCtrl.messageErreur != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: CleanCouleurs.rougeAlerte.withOpacity(0.08),
+                          border: Border.all(
+                            color: CleanCouleurs.rougeAlerte,
+                            width: 1.2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          authCtrl.messageErreur!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: CleanCouleurs.rougeAlerte,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    const Text(
+                      'Adresse Email',
+                      style: TextStyle(
+                        color: CleanCouleurs.anthracite,
+                        fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
@@ -332,6 +337,7 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),

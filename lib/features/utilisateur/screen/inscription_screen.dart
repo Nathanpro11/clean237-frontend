@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
 
 class InscriptionScreen extends StatefulWidget {
   const InscriptionScreen({super.key});
@@ -26,9 +27,13 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
 
   @override
   void dispose() {
-    _nomController.dispose(); _emailController.dispose(); _telController.dispose();
-    _passwordController.dispose(); _confirmPasswordController.dispose();
-    _matriculeController.dispose(); _zoneController.dispose();
+    _nomController.dispose();
+    _emailController.dispose();
+    _telController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _matriculeController.dispose();
+    _zoneController.dispose();
     super.dispose();
   }
 
@@ -42,7 +47,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
 
     if (_formKey.currentState!.validate()) {
       final authCtrl = context.read<AuthController>();
-      
+
       final succes = await authCtrl.inscrireUnUtilisateur(
         nom: _nomController.text.trim(),
         email: _emailController.text.trim().toLowerCase(),
@@ -57,7 +62,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Compte créé avec succès !'), backgroundColor: CleanCouleurs.vertEco),
         );
-        Navigator.pop(context); // 🎯 LIEN DE NAVIGATION : Retour automatique au login
+        Navigator.pop(context);
       }
     }
   }
@@ -68,88 +73,121 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
 
     return Scaffold(
       backgroundColor: CleanCouleurs.blancPur,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: CleanCouleurs.anthracite),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('S\'inscrire', style: TextStyle(color: CleanCouleurs.vertEco, fontSize: 16, fontWeight: FontWeight.w600)),
-        centerTitle: true,
-      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text('Inscription', style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 28, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  const Text('Rejoignez-nous pour un espace étincelant.', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  const SizedBox(height: 30),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.06,
+              vertical: 16.0,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.arrow_back, color: CleanCouleurs.anthracite),
+                          onPressed: () => Navigator.maybePop(context),
+                        ),
+                        const SizedBox(width: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            'assets/logo.jpeg',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Clean237',
+                          style: TextStyle(
+                            color: CleanCouleurs.anthracite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const AuthToggleTabs(estConnexionActive: false),
+                    const SizedBox(height: 24),
+                    const Text('Inscription', style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 28, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    const Text('Rejoignez-nous pour un espace étincelant.', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                    const SizedBox(height: 30),
 
-                  _buildLabel('Nom complet'),
-                  TextFormField(controller: _nomController, decoration: _buildInputDecoration('Jean-Pierre Nguene', Icons.person_outline), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
-                  const SizedBox(height: 18),
+                    _buildLabel('Nom complet'),
+                    TextFormField(controller: _nomController, decoration: _buildInputDecoration('Jean-Pierre Nguene', Icons.person_outline), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                    const SizedBox(height: 18),
 
-                  _buildLabel('Adresse Email'),
-                  TextFormField(controller: _emailController, decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline), validator: (v) => (v == null || !v.contains('@')) ? 'Invalide' : null),
-                  const SizedBox(height: 18),
+                    _buildLabel('Adresse Email'),
+                    TextFormField(controller: _emailController, decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline), validator: (v) => (v == null || !v.contains('@')) ? 'Invalide' : null),
+                    const SizedBox(height: 18),
 
-                  _buildLabel('Numéro de Téléphone'),
-                  TextFormField(controller: _telController, decoration: _buildInputDecoration('+237 6xx xx xx xx', Icons.phone_android_outlined), validator: (v) => (v == null || v.length < 9) ? 'Incomplet' : null),
-                  const SizedBox(height: 18),
+                    _buildLabel('Numéro de Téléphone'),
+                    TextFormField(controller: _telController, decoration: _buildInputDecoration('+237 6xx xx xx xx', Icons.phone_android_outlined), validator: (v) => (v == null || v.length < 9) ? 'Incomplet' : null),
+                    const SizedBox(height: 18),
 
-                  _buildLabel('Type de Profil'),
-                  DropdownButtonFormField<String>(
-                    value: _profilSelectionne,
-                    decoration: _buildInputDecoration('', Icons.assignment_ind_outlined),
-                    items: const [
-                      DropdownMenuItem(value: 'citoyen', child: Text('Citoyen Standard')),
-                      DropdownMenuItem(value: 'agent', child: Text('Agent de Collecte Terrain')),
+                    _buildLabel('Type de Profil'),
+                    DropdownButtonFormField<String>(
+                      value: _profilSelectionne,
+                      decoration: _buildInputDecoration('', Icons.assignment_ind_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'citoyen', child: Text('Citoyen Standard')),
+                        DropdownMenuItem(value: 'agent', child: Text('Agent de Collecte Terrain')),
+                      ],
+                      onChanged: (val) => setState(() => _profilSelectionne = val!),
+                    ),
+                    const SizedBox(height: 18),
+
+                    if (_profilSelectionne == 'agent') ...[
+                      _buildLabel('Matricule Professionnel'),
+                      TextFormField(controller: _matriculeController, decoration: _buildInputDecoration('Ex: AGT-237-001', Icons.badge_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                      const SizedBox(height: 18),
+                      _buildLabel('Zone d\'affectation'),
+                      TextFormField(controller: _zoneController, decoration: _buildInputDecoration('Ex: Yaoundé VI', Icons.map_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                      const SizedBox(height: 18),
                     ],
-                    onChanged: (val) => setState(() => _profilSelectionne = val!),
-                  ),
-                  const SizedBox(height: 18),
 
-                  // UX Interactive Profil Agent
-                  if (_profilSelectionne == 'agent') ...[
-                    _buildLabel('Matricule Professionnel'),
-                    TextFormField(controller: _matriculeController, decoration: _buildInputDecoration('Ex: AGT-237-001', Icons.badge_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                    _buildLabel('Mot de passe'),
+                    TextFormField(controller: _passwordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_outline, avecSuffix: true), validator: (v) => (v == null || v.length < 6) ? '6 caractères min.' : null),
                     const SizedBox(height: 18),
-                    _buildLabel('Zone d\'affectation'),
-                    TextFormField(controller: _zoneController, decoration: _buildInputDecoration('Ex: Yaoundé VI', Icons.map_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
-                    const SizedBox(height: 18),
+
+                    _buildLabel('Confirmer le mot de passe'),
+                    TextFormField(controller: _confirmPasswordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outlined), validator: (v) => (v != _passwordController.text) ? 'Mots de passe différents' : null),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Checkbox(value: _accepteConditions, activeColor: CleanCouleurs.vertEco, onChanged: (val) => setState(() => _accepteConditions = val!)),
+                        const Expanded(
+                          child: Text('J\'accepte les Conditions d\'utilisation', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 25),
+
+                    ElevatedButton(
+                      onPressed: authCtrl.estEnCoursDeChargement ? null : _validerEtInscrire,
+                      style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0),
+                      child: authCtrl.estEnCoursDeChargement
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('S\'inscrire', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 20),
                   ],
-
-                  _buildLabel('Mot de passe'),
-                  TextFormField(controller: _passwordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_outline, avecSuffix: true), validator: (v) => (v == null || v.length < 6) ? '6 caractères min.' : null),
-                  const SizedBox(height: 18),
-
-                  _buildLabel('Confirmer le mot de passe'),
-                  TextFormField(controller: _confirmPasswordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outlined), validator: (v) => (v != _passwordController.text) ? 'Mots de passe différents' : null),
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      Checkbox(value: _accepteConditions, activeColor: CleanCouleurs.vertEco, onChanged: (val) => setState(() => _accepteConditions = val!)),
-                      const Text('J\'accepte les Conditions d\'utilisation', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-
-                  ElevatedButton(
-                    onPressed: authCtrl.estEnCoursDeChargement ? null : _validerEtInscrire,
-                    style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0),
-                    child: authCtrl.estEnCoursDeChargement
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('S\'inscrire', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
