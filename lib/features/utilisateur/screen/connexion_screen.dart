@@ -1,10 +1,11 @@
-import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
-import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/inscription_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
 
 class ConnexionScreen extends StatefulWidget {
   const ConnexionScreen({super.key});
@@ -78,50 +79,13 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: GridView.count(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 2,
-                          crossAxisSpacing: 2,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            Container(color: Colors.transparent),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: CleanCouleurs.vertEco,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            ),
-                            Container(color: Colors.transparent),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: CleanCouleurs.vertEco,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: CleanCouleurs.vertHover,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: CleanCouleurs.vertEco,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            ),
-                            Container(color: Colors.transparent),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: CleanCouleurs.vertEco,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            ),
-                            Container(color: Colors.transparent),
-                          ],
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.asset(
+                          'assets/logo.jpeg',
+                          width: 24,
+                          height: 24,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -327,16 +291,14 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
                       Expanded(
                         child: _buildBoutonSocial(
                           'Google',
-                          Icons.cancel_outlined,
-                          Colors.redAccent,
+                          const FaIcon(FontAwesomeIcons.google, color: Colors.redAccent, size: 18),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildBoutonSocial(
                           'Apple',
-                          Icons.apple,
-                          CleanCouleurs.anthracite,
+                          const Icon(Icons.apple, color: CleanCouleurs.anthracite, size: 18),
                         ),
                       ),
                     ],
@@ -405,7 +367,7 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
     );
   }
 
-  Widget _buildBoutonSocial(String label, IconData icone, Color couleurIcone) {
+  Widget _buildBoutonSocial(String label, Widget icone) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
@@ -415,7 +377,7 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icone, color: couleurIcone, size: 18),
+          icone,
           const SizedBox(width: 8),
           Text(
             label,
