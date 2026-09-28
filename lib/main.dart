@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/controller/admin_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/profil_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/repository/fake_admin_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/fake_auth_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/splash_screen.dart';
 
@@ -16,6 +18,7 @@ void main() {
         // Quand le backend sera prêt, remplacer par : AuthController(ApiAuthRepository())
         ChangeNotifierProvider(create: (context) => AuthController(FakeAuthRepository())),
         ChangeNotifierProvider(create: (context) => ProfilController()),
+        ChangeNotifierProvider(create: (context) => AdminController(FakeAdminRepository())),
       ],
       child: const Clean237App(),
     ),
