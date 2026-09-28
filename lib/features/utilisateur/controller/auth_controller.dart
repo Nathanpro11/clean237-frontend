@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/auth_repository.dart';
+import 'package:clean237_frontend/utils/jwt_helper.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthRepository _repository;
@@ -9,12 +10,22 @@ class AuthController extends ChangeNotifier {
 
   UtilisateurModel? _utilisateurConnecte;
   String? _tokenJwt;
+  String? _role;
   bool _estEnCoursDeChargement = false;
   String? _messageErreur;
   bool _estBloqueAntiBruteforce = false;
 
   UtilisateurModel? get utilisateur => _utilisateurConnecte;
   String? get token => _tokenJwt;
+
+  /// Rôle résolu depuis le payload du JWT ("citoyen", "agent" ou "admin").
+  String? get role => _role;
+  bool get estAdmin => _role == 'admin';
+
+  /// Session valide : utilisateur chargé et token JWT non expiré.
+  bool get estConnecte =>
+      _utilisateurConnecte != null && _tokenJwt != null && !JwtHelper.estExpire(_tokenJwt);
+
   bool get estEnCoursDeChargement => _estEnCoursDeChargement;
   String? get messageErreur => _messageErreur;
   bool get estBloqueAntiBruteforce => _estBloqueAntiBruteforce;
@@ -33,6 +44,8 @@ class AuthController extends ChangeNotifier {
 
     _tokenJwt = resultat.token;
     _utilisateurConnecte = resultat.utilisateur;
+    // Le rôle vient du token ; à défaut, du profil renvoyé.
+    _role = JwtHelper.extraireRole(resultat.token) ?? resultat.utilisateur?.roleNom;
     _messageErreur = resultat.messageErreur;
     _estBloqueAntiBruteforce = resultat.estBloqueAntiBruteforce;
     _setChargement(false);
@@ -66,7 +79,6 @@ class AuthController extends ChangeNotifier {
     return resultat.succes;
   }
 
-  // 🆕 Modifier les infos du profil (nom, téléphone)
   Future<bool> modifierProfil({
     required String nom,
     required String telephone,
@@ -84,7 +96,6 @@ class AuthController extends ChangeNotifier {
     return resultat.succes;
   }
 
-  // 🆕 Changer le mot de passe
   Future<bool> changerMotDePasse({
     required String ancienMotDePasse,
     required String nouveauMotDePasse,
@@ -105,6 +116,7 @@ class AuthController extends ChangeNotifier {
   void logout() {
     _utilisateurConnecte = null;
     _tokenJwt = null;
+    _role = null;
     _messageErreur = null;
     _estBloqueAntiBruteforce = false;
     notifyListeners();

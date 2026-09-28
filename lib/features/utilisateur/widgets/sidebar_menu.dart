@@ -1,9 +1,13 @@
-import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/connexion_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/module_indisponible_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/parametres_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/aide_support_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/admin_utilisateurs_screen.dart';
 
 /// Menu latéral (Drawer), basé sur la maquette sidebar-menu.
 /// Utilisé par tous les écrans principaux (Accueil, Dashboard, Profil...).
@@ -84,15 +88,39 @@ class SidebarMenu extends StatelessWidget {
               ),
             ),
             _buildItemMenu(context, Icons.person_outline, 'Compte', actif: true, onTap: () => Navigator.pop(context)),
+            if (authCtrl.estAdmin)
+              _buildItemMenu(context, Icons.admin_panel_settings_outlined, 'Gestion des comptes', onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AdminUtilisateursScreen()),
+                );
+              }),
             _buildItemMenu(context, Icons.access_time, "Historique d'activité", onTap: () {
               Navigator.pop(context);
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const HistoriqueScreen()),
               );
             }),
-            _buildItemMenu(context, Icons.location_on_outlined, 'Secteurs de Collecte', onTap: () => Navigator.pop(context)),
-            _buildItemMenu(context, Icons.settings_outlined, 'Paramètres', onTap: () => Navigator.pop(context)),
-            _buildItemMenu(context, Icons.help_outline, 'Aide & Support', onTap: () => Navigator.pop(context)),
+            _buildItemMenu(context, Icons.location_on_outlined, 'Secteurs de Collecte', onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ModuleIndisponibleScreen(titre: 'Secteurs de Collecte', indexNavigation: 2),
+                ),
+              );
+            }),
+            _buildItemMenu(context, Icons.settings_outlined, 'Paramètres', onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ParametresScreen()),
+              );
+            }),
+            _buildItemMenu(context, Icons.help_outline, 'Aide & Support', onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const AideSupportScreen()),
+              );
+            }),
             const Spacer(),
             const Divider(height: 1),
             _buildItemMenu(
@@ -128,7 +156,7 @@ class SidebarMenu extends StatelessWidget {
       case 'agent':
         return 'Agent de Terrain';
       case 'admin':
-        return 'Administrateur';
+        return 'Super-Admin';
       default:
         return 'Citoyen';
     }

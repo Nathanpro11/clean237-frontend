@@ -6,6 +6,7 @@ import 'package:clean237_frontend/features/utilisateur/controller/auth_controlle
 import 'package:clean237_frontend/features/utilisateur/screen/inscription_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/admin_dashboard_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
 
 class ConnexionScreen extends StatefulWidget {
@@ -43,11 +44,14 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
             backgroundColor: CleanCouleurs.vertEco,
           ),
         );
-        // 🎯 Navigation selon le rôle : citoyen -> Accueil, admin/agent -> Dashboard
-        final role = authCtrl.utilisateur?.roleNom ?? 'citoyen';
-        final ecranDestination = role == 'citoyen'
-            ? const AccueilScreen()
-            : const DashboardScreen();
+        // 🎯 Résolution du rôle depuis le JWT : admin -> supervision municipale,
+        // agent -> dashboard terrain, sinon vue citoyen.
+        final role = authCtrl.role ?? 'citoyen';
+        final Widget ecranDestination = switch (role) {
+          'admin' => const AdminDashboardScreen(),
+          'agent' => const DashboardScreen(),
+          _ => const AccueilScreen(),
+        };
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => ecranDestination),
