@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/connexion_screen.dart';
 
 class InscriptionScreen extends StatefulWidget {
   const InscriptionScreen({super.key});
@@ -62,10 +63,19 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Compte créé avec succès !'), backgroundColor: CleanCouleurs.vertEco),
         );
-        Navigator.pop(context);
+        // Les onglets Connexion/Inscription utilisent pushReplacement, donc cet
+        // écran est seul dans la pile : Navigator.pop() planterait. On revient
+        // explicitement vers l'écran de connexion.
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ConnexionScreen()),
+        );
       }
     }
   }
+
+  static final RegExp _regexEmail = RegExp(
+    r'^[a-zA-Z0-9.!#$%&*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +142,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                     const SizedBox(height: 18),
 
                     _buildLabel('Adresse Email'),
-                    TextFormField(controller: _emailController, decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline), validator: (v) => (v == null || !v.contains('@')) ? 'Invalide' : null),
+                    TextFormField(controller: _emailController, decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !_regexEmail.hasMatch(v.trim())) ? 'Adresse email invalide' : null),
                     const SizedBox(height: 18),
 
                     _buildLabel('Numéro de Téléphone'),

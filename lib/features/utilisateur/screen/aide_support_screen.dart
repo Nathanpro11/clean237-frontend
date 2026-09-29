@@ -55,7 +55,11 @@ class AideSupportScreen extends StatelessWidget {
             ),
             child: Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: Column(
+              child: Material(
+                type: MaterialType.transparency,
+                borderRadius: BorderRadius.circular(14),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
                 children: _faqMock
                     .map((item) => ExpansionTile(
                           title: Text(
@@ -74,6 +78,7 @@ class AideSupportScreen extends StatelessWidget {
                           ],
                         ))
                     .toList(),
+                ),
               ),
             ),
           ),
