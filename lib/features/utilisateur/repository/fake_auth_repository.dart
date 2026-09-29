@@ -3,15 +3,16 @@ import 'package:clean237_frontend/features/utilisateur/repository/auth_repositor
 import 'package:clean237_frontend/utils/jwt_helper.dart';
 
 /// Implémentation FACTICE d'AuthRepository (sans backend).
-/// Comptes de test (mot de passe : 123456) :
+/// Comptes de démonstration préchargés (mot de passe : 123456) :
 ///   test@clean237.cm   -> citoyen
 ///   agent@clean237.cm  -> agent de terrain
 ///   admin@clean237.cm  -> Super-Admin
+/// Tout compte créé via inscrireUnUtilisateur() est aussi enregistré ici,
+/// avec son propre mot de passe, et devient utilisable pour se connecter.
 class FakeAuthRepository implements AuthRepository {
-  static const _motDePasseInitial = '123456';
-
   int _tentativesEchouees = 0;
-  String _motDePasseActuel = _motDePasseInitial;
+  int _prochainId = 4;
+
   UtilisateurModel? _utilisateurActuel;
 
   final Map<String, UtilisateurModel> _comptes = {
@@ -52,9 +53,18 @@ class FakeAuthRepository implements AuthRepository {
     ),
   };
 
+  // Mot de passe propre à chaque compte (au lieu d'un seul mot de passe global).
+  final Map<String, String> _motsDePasse = {
+    'test@clean237.cm': '123456',
+    'agent@clean237.cm': '123456',
+    'admin@clean237.cm': '123456',
+  };
+
   @override
   Future<AuthResult> login(String email, String motDepasse) async {
     await Future.delayed(const Duration(milliseconds: 800));
+
+    final emailNormalise = email.trim().toLowerCase();
 
     if (_tentativesEchouees >= 3) {
       return AuthResult(
@@ -65,9 +75,10 @@ class FakeAuthRepository implements AuthRepository {
       );
     }
 
-    final compte = _comptes[email.trim().toLowerCase()];
+    final compte = _comptes[emailNormalise];
+    final motDePasseAttendu = _motsDePasse[emailNormalise];
 
-    if (compte != null && motDepasse.trim() == _motDePasseActuel) {
+    if (compte != null && motDePasseAttendu != null && motDepasse.trim() == motDePasseAttendu) {
       if (!compte.estActif) {
         return AuthResult(succes: false, messageErreur: 'Ce compte est désactivé.');
       }
@@ -75,8 +86,6 @@ class FakeAuthRepository implements AuthRepository {
       _tentativesEchouees = 0;
       _utilisateurActuel = compte;
 
-      // Faux JWT avec le même format de payload que le backend :
-      // le rôle est un objet { nom, permissionsIds }.
       final token = JwtHelper.creerTokenFactice({
         'id': compte.id,
         'email': compte.email,
@@ -90,8 +99,7 @@ class FakeAuthRepository implements AuthRepository {
     _tentativesEchouees++;
     return AuthResult(
       succes: false,
-      messageErreur:
-          'Identifiants invalides (test@, agent@ ou admin@clean237.cm / $_motDePasseInitial).',
+      messageErreur: 'Identifiants invalides.',
     );
   }
 
@@ -107,14 +115,36 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 800));
 
-    if (_comptes.containsKey(email.trim().toLowerCase())) {
+    final emailNormalise = email.trim().toLowerCase();
+
+    if (_comptes.containsKey(emailNormalise)) {
       return AuthResult(
         succes: false,
-        messageErreur: 'Cet email est déjà utilisé (simulation).',
+        messageErreur: 'Cet email est déjà utilisé.',
       );
     }
 
-    return AuthResult(succes: true);
+    final permissionsParDefaut = profil == 'agent'
+        ? const ['lire_mission', 'maj_collecte']
+        : const ['lire_signalement', 'creer_signalement'];
+
+    final nouveauCompte = UtilisateurModel(
+      id: '${_prochainId++}',
+      nom: nom.trim(),
+      email: emailNormalise,
+      telephone: telephone.trim(),
+      matricule: profil == 'agent' ? matricule : null,
+      zoneAffectee: profil == 'agent' ? zoneAffectee : null,
+      roleNom: profil,
+      permissions: permissionsParDefaut,
+      estActif: true,
+    );
+
+    // Le compte est réellement enregistré : on peut ensuite s'y connecter.
+    _comptes[emailNormalise] = nouveauCompte;
+    _motsDePasse[emailNormalise] = motDepasse.trim();
+
+    return AuthResult(succes: true, utilisateur: nouveauCompte);
   }
 
   @override
@@ -157,7 +187,12 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
-    if (ancienMotDePasse.trim() != _motDePasseActuel) {
+    final actuel = _utilisateurActuel;
+    if (actuel == null) {
+      return AuthResult(succes: false, messageErreur: 'Aucun utilisateur connecté.');
+    }
+
+    if (_motsDePasse[actuel.email] != ancienMotDePasse.trim()) {
       return AuthResult(succes: false, messageErreur: 'Ancien mot de passe incorrect.');
     }
 
@@ -165,7 +200,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
     }
 
-    _motDePasseActuel = nouveauMotDePasse.trim();
+    _motsDePasse[actuel.email] = nouveauMotDePasse.trim();
     return AuthResult(succes: true);
   }
 }
