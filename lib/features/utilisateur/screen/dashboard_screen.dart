@@ -1,8 +1,9 @@
-import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
 /// Dashboard polymorphique : affiche la ou les sections adaptées au rôle
 /// de l'utilisateur connecté (Admin / Agent terrain / Citoyen).
@@ -10,6 +11,18 @@ import 'package:clean237_frontend/features/utilisateur/controller/auth_controlle
 /// Données FACTICES en attendant un vrai DashboardRepository.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GardeAcces(
+      rolesAutorises: ['agent'],
+      child: _DashboardContenu(),
+    );
+  }
+}
+
+class _DashboardContenu extends StatelessWidget {
+  const _DashboardContenu();
 
   @override
   Widget build(BuildContext context) {
