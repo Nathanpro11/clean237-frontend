@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
 /// Écran Aide & Support (module Utilisateur).
 /// FAQ dépliable + moyens de contact + formulaire de message.
 class AideSupportScreen extends StatelessWidget {
   const AideSupportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GardeAcces(child: _AideSupportContenu());
+  }
+}
+
+class _AideSupportContenu extends StatelessWidget {
+  const _AideSupportContenu();
 
   static const List<Map<String, String>> _faqMock = [
     {
