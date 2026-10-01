@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
 /// Écran Paramètres (module Utilisateur).
 /// Préférences locales uniquement pour l'instant (pas encore persistées côté backend).
-class ParametresScreen extends StatefulWidget {
+class ParametresScreen extends StatelessWidget {
   const ParametresScreen({super.key});
 
   @override
-  State<ParametresScreen> createState() => _ParametresScreenState();
+  Widget build(BuildContext context) {
+    return const GardeAcces(child: _ParametresContenu());
+  }
 }
 
-class _ParametresScreenState extends State<ParametresScreen> {
+class _ParametresContenu extends StatefulWidget {
+  const _ParametresContenu();
+
+  @override
+  State<_ParametresContenu> createState() => _ParametresContenuState();
+}
+
+class _ParametresContenuState extends State<_ParametresContenu> {
   bool _notificationsPush = true;
   bool _notificationsEmail = false;
   bool _localisationActive = true;
