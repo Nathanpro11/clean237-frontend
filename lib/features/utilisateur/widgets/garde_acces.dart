@@ -10,8 +10,9 @@ import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.d
 /// Garde d'accès : le contenu protégé n'est construit que si
 ///   1. une session valide existe (utilisateur connecté, JWT non expiré) ;
 ///   2. le rôle lu dans le JWT fait partie de [rolesAutorises].
+/// [rolesAutorises] vide == n'importe quel rôle connecté est admis
+/// (pour les écrans communs comme Profil ou Historique).
 /// Sinon : écran de connexion, ou écran "accès refusé".
-/// La garde écoute AuthController : une déconnexion ferme l'accès aussitôt.
 ///
 /// Note : c'est une protection d'interface. Le vrai contrôle d'accès reste
 /// celui du backend, qui doit vérifier le JWT et le rôle sur chaque route.
@@ -19,7 +20,7 @@ class GardeAcces extends StatelessWidget {
   final List<String> rolesAutorises;
   final Widget child;
 
-  const GardeAcces({super.key, required this.rolesAutorises, required this.child});
+  const GardeAcces({super.key, this.rolesAutorises = const [], required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class GardeAcces extends StatelessWidget {
       return const ConnexionScreen();
     }
 
-    if (!rolesAutorises.contains(auth.role)) {
+    if (rolesAutorises.isNotEmpty && !rolesAutorises.contains(auth.role)) {
       return const _AccesRefuse();
     }
 
@@ -67,8 +68,7 @@ class _AccesRefuse extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Cet espace est réservé aux administrateurs de la municipalité. '
-                    'Votre compte n\'a pas les droits nécessaires.',
+                    'Votre compte n\'a pas les droits nécessaires pour accéder à cet espace.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
                   ),
