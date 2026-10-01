@@ -1,64 +1,13 @@
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
+import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 
+/// Implémentation FACTICE d'AdminRepository. Les comptes viennent du même
+/// UtilisateursStore que FakeAuthRepository : rien n'est dupliqué ni désynchronisé.
 class FakeAdminRepository implements AdminRepository {
-  final List<UtilisateurModel> _utilisateurs = [
-    UtilisateurModel(
-      id: 'u1',
-      nom: 'Weezy Kolomso',
-      email: 'weezy.kolomso@clean237.cm',
-      telephone: '+237677000001',
-      roleNom: 'citoyen',
-      permissions: const ['creer_utilisateur'],
-      estActif: true,
-    ),
-    UtilisateurModel(
-      id: 'u2',
-      nom: 'Néhémi Mbainadji',
-      email: 'nehemi.mbainadji@clean237.cm',
-      telephone: '+237677000002',
-      matricule: 'AGT-237-001',
-      zoneAffectee: 'Yaoundé VI',
-      roleNom: 'agent',
-      permissions: const ['creer_utilisateur', 'modifier_utilisateur'],
-      estActif: true,
-    ),
-    UtilisateurModel(
-      id: 'u3',
-      nom: 'Aïcha Ngono',
-      email: 'aicha.ngono@clean237.cm',
-      telephone: '+237677000003',
-      roleNom: 'citoyen',
-      permissions: const [],
-      estActif: true,
-    ),
-    UtilisateurModel(
-      id: 'u4',
-      nom: 'Paul Essomba',
-      email: 'paul.essomba@clean237.cm',
-      telephone: '+237677000004',
-      matricule: 'AGT-237-014',
-      zoneAffectee: 'Yaoundé VI',
-      roleNom: 'agent',
-      permissions: const ['modifier_utilisateur'],
-      estActif: false,
-    ),
-    UtilisateurModel(
-      id: 'u5',
-      nom: 'Admin Yaoundé VI',
-      email: 'admin@clean237.cm',
-      telephone: '+237677000005',
-      roleNom: 'admin',
-      permissions: const [
-        'creer_utilisateur',
-        'modifier_utilisateur',
-        'supprimer_utilisateur',
-        'creer_role',
-        'consulter_logs',
-      ],
-      estActif: true,
-    ),
-  ];
+  final UtilisateursStore _store;
+
+  FakeAdminRepository(this._store);
 
   @override
   Future<StatsAdmin> chargerStats() async {
@@ -79,7 +28,7 @@ class FakeAdminRepository implements AdminRepository {
   @override
   Future<List<UtilisateurModel>> chargerUtilisateurs() async {
     await Future.delayed(const Duration(milliseconds: 400));
-    return List.unmodifiable(_utilisateurs);
+    return _store.listerTous();
   }
 
   @override
@@ -90,26 +39,12 @@ class FakeAdminRepository implements AdminRepository {
     List<String>? permissions,
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
-
-    final index = _utilisateurs.indexWhere((u) => u.id == id);
-    if (index == -1) {
-      throw Exception('Utilisateur introuvable.');
-    }
-
-    final actuel = _utilisateurs[index];
-    final modifie = UtilisateurModel(
-      id: actuel.id,
-      nom: actuel.nom,
-      email: actuel.email,
-      telephone: actuel.telephone,
-      matricule: actuel.matricule,
-      zoneAffectee: actuel.zoneAffectee,
-      roleNom: roleNom ?? actuel.roleNom,
-      permissions: permissions ?? actuel.permissions,
-      estActif: estActif ?? actuel.estActif,
+    return _store.mettreAJourDroits(
+      id: id,
+      estActif: estActif,
+      roleNom: roleNom,
+      permissions: permissions,
     );
-    _utilisateurs[index] = modifie;
-    return modifie;
   }
 
   @override
