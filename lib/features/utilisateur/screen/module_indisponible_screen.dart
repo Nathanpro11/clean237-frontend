@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 
 /// Écran générique affiché pour les modules développés par d'autres membres
@@ -13,6 +14,20 @@ class ModuleIndisponibleScreen extends StatelessWidget {
     required this.titre,
     required this.indexNavigation,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return GardeAcces(
+      child: _ModuleIndisponibleContenu(titre: titre, indexNavigation: indexNavigation),
+    );
+  }
+}
+
+class _ModuleIndisponibleContenu extends StatelessWidget {
+  final String titre;
+  final int indexNavigation;
+
+  const _ModuleIndisponibleContenu({required this.titre, required this.indexNavigation});
 
   @override
   Widget build(BuildContext context) {
