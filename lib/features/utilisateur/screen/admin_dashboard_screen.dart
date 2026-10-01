@@ -5,8 +5,8 @@ import 'package:clean237_frontend/features/utilisateur/controller/admin_controll
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/admin_utilisateurs_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
-import 'package:clean237_frontend/features/utilisateur/widgets/graphique_tendance.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 
 const Color _vertForet = Color(0xFF14532D);
 const Color _cramoisi = Color(0xFFDC143C);
@@ -50,6 +50,7 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
     return Scaffold(
       backgroundColor: CleanCouleurs.grisFond,
       drawer: const SidebarMenu(),
+      bottomNavigationBar: const CleanBottomNav(currentIndex: 0),
       body: SafeArea(
         child: Column(
           children: [
@@ -133,8 +134,6 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
               const SizedBox(height: 24),
               _buildCartesScore(stats),
               const SizedBox(height: 24),
-              _buildCarteGraphique(stats),
-              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
@@ -202,37 +201,6 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
     );
   }
 
-  Widget _buildCarteGraphique(StatsAdmin stats) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: CleanCouleurs.blancPur,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Signalements par trimestre',
-            style: TextStyle(color: _vertForet, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Tendance par quartier, Yaoundé VI',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const SizedBox(height: 20),
-          GraphiqueTendance(
-            etiquettes: stats.trimestres,
-            series: stats.tendanceParQuartier,
-            couleurs: const [CleanCouleurs.vertEco, _vertForet, Color(0xFF86B817)],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _CarteScore extends StatelessWidget {
