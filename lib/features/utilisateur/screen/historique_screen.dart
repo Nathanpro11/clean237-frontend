@@ -2,11 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/models/log_model.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
 /// Écran "Historique d'activité", basé sur la maquette historique-audit.
 /// Utilise LogModel. Données FACTICES en attendant un vrai HistoriqueRepository.
 class HistoriqueScreen extends StatelessWidget {
   const HistoriqueScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GardeAcces(child: _HistoriqueContenu());
+  }
+}
+
+class _HistoriqueContenu extends StatelessWidget {
+  const _HistoriqueContenu();
 
   // 🧪 Logs mockés — à remplacer par HistoriqueRepository plus tard
   List<LogModel> get _logsMock => [
