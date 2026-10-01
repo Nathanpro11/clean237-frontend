@@ -1,17 +1,32 @@
-import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
-import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/admin_dashboard_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/module_indisponible_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/profil_screen.dart';
 
 /// Barre de navigation commune à tous les écrans principaux :
 /// Accueil, Collectes, Signaler, Historique, Profil.
+/// L'onglet "Accueil" s'adapte au rôle connecté : citoyen -> AccueilScreen,
+/// agent -> DashboardScreen, admin -> AdminDashboardScreen.
 /// Utilise pushReplacement pour éviter d'empiler les écrans indéfiniment.
 class CleanBottomNav extends StatelessWidget {
   final int currentIndex;
 
   const CleanBottomNav({super.key, required this.currentIndex});
+
+  Widget _ecranAccueilPourRole(BuildContext context) {
+    final role = context.read<AuthController>().role;
+    return switch (role) {
+      'admin' => const AdminDashboardScreen(),
+      'agent' => const DashboardScreen(),
+      _ => const AccueilScreen(),
+    };
+  }
 
   void _naviguer(BuildContext context, int index) {
     if (index == currentIndex) return;
@@ -19,7 +34,7 @@ class CleanBottomNav extends StatelessWidget {
     late final Widget ecran;
     switch (index) {
       case 0:
-        ecran = const AccueilScreen();
+        ecran = _ecranAccueilPourRole(context);
         break;
       case 1:
         ecran = const ModuleIndisponibleScreen(titre: 'Collectes', indexNavigation: 1);
