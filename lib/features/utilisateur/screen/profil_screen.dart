@@ -3,13 +3,24 @@ import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/connexion_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
+
 
 /// Écran Profil (module Utilisateur) : consultation et modification
 /// des informations de base, changement de mot de passe, déconnexion.
 class ProfilScreen extends StatelessWidget {
   const ProfilScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GardeAcces(child: _ProfilContenu());
+  }
+}
+
+class _ProfilContenu extends StatelessWidget {
+  const _ProfilContenu();
 
   @override
   Widget build(BuildContext context) {
