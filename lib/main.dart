@@ -5,10 +5,14 @@ import 'package:clean237_frontend/features/utilisateur/controller/admin_controll
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/profil_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/fake_admin_repository.dart';
+import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/fake_auth_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/splash_screen.dart';
 
 void main() {
+  // Source unique des comptes simulés, partagée par Auth et Admin.
+  final utilisateursStore = UtilisateursStore();
+
   runApp(
     // 🎯 CRITÈRE GRILLE : Initialisation et couplage de l'architecture MVVM / Providers
     MultiProvider(
@@ -16,9 +20,9 @@ void main() {
         // 🧪 MODE DÉVELOPPEMENT SANS BACKEND :
         // FakeAuthRepository() simule les réponses du serveur.
         // Quand le backend sera prêt, remplacer par : AuthController(ApiAuthRepository())
-        ChangeNotifierProvider(create: (context) => AuthController(FakeAuthRepository())),
+        ChangeNotifierProvider(create: (context) => AuthController(FakeAuthRepository(utilisateursStore))),
         ChangeNotifierProvider(create: (context) => ProfilController()),
-        ChangeNotifierProvider(create: (context) => AdminController(FakeAdminRepository())),
+        ChangeNotifierProvider(create: (context) => AdminController(FakeAdminRepository(utilisateursStore))),
       ],
       child: const Clean237App(),
     ),
