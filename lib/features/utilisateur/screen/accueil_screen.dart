@@ -4,12 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
 /// Écran d'accueil (vue Citoyen), basé sur la maquette "ecran-accueil".
 /// Les missions du jour sont pour l'instant des données FACTICES (mock),
 /// en attendant un vrai MissionRepository / backend.
 class AccueilScreen extends StatelessWidget {
   const AccueilScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GardeAcces(
+      rolesAutorises: ['citoyen'],
+      child: _AccueilContenu(),
+    );
+  }
+}
+
+class _AccueilContenu extends StatelessWidget {
+  const _AccueilContenu();
 
   // 🧪 Données mockées le temps de brancher un vrai MissionRepository
   static const List<_MissionDuJour> _missionsMock = [
