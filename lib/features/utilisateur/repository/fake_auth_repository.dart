@@ -1,70 +1,22 @@
-import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/auth_repository.dart';
+import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 import 'package:clean237_frontend/utils/jwt_helper.dart';
 
 /// Implémentation FACTICE d'AuthRepository (sans backend).
-/// Comptes de démonstration préchargés (mot de passe : 123456) :
-///   test@clean237.cm   -> citoyen
-///   agent@clean237.cm  -> agent de terrain
-///   admin@clean237.cm  -> Super-Admin
-/// Tout compte créé via inscrireUnUtilisateur() est aussi enregistré ici,
-/// avec son propre mot de passe, et devient utilisable pour se connecter.
+/// Lit et écrit dans UtilisateursStore, partagé avec FakeAdminRepository :
+/// un compte créé ici est visible dans la gestion admin, et un compte
+/// désactivé par l'admin ne peut plus se connecter ici.
 class FakeAuthRepository implements AuthRepository {
+  final UtilisateursStore _store;
+
+  FakeAuthRepository(this._store);
+
   int _tentativesEchouees = 0;
-  int _prochainId = 4;
-
-  UtilisateurModel? _utilisateurActuel;
-
-  final Map<String, UtilisateurModel> _comptes = {
-    'test@clean237.cm': UtilisateurModel(
-      id: '1',
-      nom: 'Jean Testeur',
-      email: 'test@clean237.cm',
-      telephone: '+237600000000',
-      roleNom: 'citoyen',
-      permissions: const ['lire_signalement', 'creer_signalement'],
-      estActif: true,
-    ),
-    'agent@clean237.cm': UtilisateurModel(
-      id: '2',
-      nom: 'Néhémi Mbainadji',
-      email: 'agent@clean237.cm',
-      telephone: '+237600000001',
-      matricule: 'AGT-237-001',
-      zoneAffectee: 'Yaoundé VI',
-      roleNom: 'agent',
-      permissions: const ['lire_mission', 'maj_collecte'],
-      estActif: true,
-    ),
-    'admin@clean237.cm': UtilisateurModel(
-      id: '3',
-      nom: 'Admin Yaoundé VI',
-      email: 'admin@clean237.cm',
-      telephone: '+237600000002',
-      roleNom: 'admin',
-      permissions: const [
-        'creer_utilisateur',
-        'modifier_utilisateur',
-        'supprimer_utilisateur',
-        'creer_role',
-        'consulter_logs',
-      ],
-      estActif: true,
-    ),
-  };
-
-  // Mot de passe propre à chaque compte (au lieu d'un seul mot de passe global).
-  final Map<String, String> _motsDePasse = {
-    'test@clean237.cm': '123456',
-    'agent@clean237.cm': '123456',
-    'admin@clean237.cm': '123456',
-  };
+  String? _emailConnecte;
 
   @override
   Future<AuthResult> login(String email, String motDepasse) async {
     await Future.delayed(const Duration(milliseconds: 800));
-
-    final emailNormalise = email.trim().toLowerCase();
 
     if (_tentativesEchouees >= 3) {
       return AuthResult(
@@ -75,8 +27,8 @@ class FakeAuthRepository implements AuthRepository {
       );
     }
 
-    final compte = _comptes[emailNormalise];
-    final motDePasseAttendu = _motsDePasse[emailNormalise];
+    final compte = _store.trouverParEmail(email);
+    final motDePasseAttendu = _store.motDePassePour(email);
 
     if (compte != null && motDePasseAttendu != null && motDepasse.trim() == motDePasseAttendu) {
       if (!compte.estActif) {
@@ -84,7 +36,7 @@ class FakeAuthRepository implements AuthRepository {
       }
 
       _tentativesEchouees = 0;
-      _utilisateurActuel = compte;
+      _emailConnecte = compte.email;
 
       final token = JwtHelper.creerTokenFactice({
         'id': compte.id,
@@ -97,10 +49,7 @@ class FakeAuthRepository implements AuthRepository {
     }
 
     _tentativesEchouees++;
-    return AuthResult(
-      succes: false,
-      messageErreur: 'Identifiants invalides.',
-    );
+    return AuthResult(succes: false, messageErreur: 'Identifiants invalides.');
   }
 
   @override
@@ -115,34 +64,19 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 800));
 
-    final emailNormalise = email.trim().toLowerCase();
-
-    if (_comptes.containsKey(emailNormalise)) {
-      return AuthResult(
-        succes: false,
-        messageErreur: 'Cet email est déjà utilisé.',
-      );
+    if (_store.emailExiste(email)) {
+      return AuthResult(succes: false, messageErreur: 'Cet email est déjà utilisé.');
     }
 
-    final permissionsParDefaut = profil == 'agent'
-        ? const ['lire_mission', 'maj_collecte']
-        : const ['lire_signalement', 'creer_signalement'];
-
-    final nouveauCompte = UtilisateurModel(
-      id: '${_prochainId++}',
-      nom: nom.trim(),
-      email: emailNormalise,
-      telephone: telephone.trim(),
-      matricule: profil == 'agent' ? matricule : null,
-      zoneAffectee: profil == 'agent' ? zoneAffectee : null,
+    final nouveauCompte = _store.creerCompte(
+      nom: nom,
+      email: email,
+      telephone: telephone,
+      motDepasse: motDepasse,
       roleNom: profil,
-      permissions: permissionsParDefaut,
-      estActif: true,
+      matricule: matricule,
+      zoneAffectee: zoneAffectee,
     );
-
-    // Le compte est réellement enregistré : on peut ensuite s'y connecter.
-    _comptes[emailNormalise] = nouveauCompte;
-    _motsDePasse[emailNormalise] = motDepasse.trim();
 
     return AuthResult(succes: true, utilisateur: nouveauCompte);
   }
@@ -154,8 +88,8 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
-    final actuel = _utilisateurActuel;
-    if (actuel == null) {
+    final email = _emailConnecte;
+    if (email == null) {
       return AuthResult(succes: false, messageErreur: 'Aucun utilisateur connecté.');
     }
 
@@ -163,20 +97,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: 'Le nom ne peut pas être vide.');
     }
 
-    final modifie = UtilisateurModel(
-      id: actuel.id,
-      nom: nom.trim(),
-      email: actuel.email,
-      telephone: telephone.trim(),
-      matricule: actuel.matricule,
-      zoneAffectee: actuel.zoneAffectee,
-      roleNom: actuel.roleNom,
-      permissions: actuel.permissions,
-      estActif: actuel.estActif,
-    );
-
-    _utilisateurActuel = modifie;
-    _comptes[modifie.email] = modifie;
+    final modifie = _store.mettreAJourProfil(email: email, nom: nom, telephone: telephone);
     return AuthResult(succes: true, utilisateur: modifie);
   }
 
@@ -187,20 +108,25 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
-    final actuel = _utilisateurActuel;
-    if (actuel == null) {
+    final email = _emailConnecte;
+    if (email == null) {
       return AuthResult(succes: false, messageErreur: 'Aucun utilisateur connecté.');
-    }
-
-    if (_motsDePasse[actuel.email] != ancienMotDePasse.trim()) {
-      return AuthResult(succes: false, messageErreur: 'Ancien mot de passe incorrect.');
     }
 
     if (nouveauMotDePasse.trim().length < 6) {
       return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
     }
 
-    _motsDePasse[actuel.email] = nouveauMotDePasse.trim();
+    final ok = _store.changerMotDePasse(
+      email: email,
+      ancien: ancienMotDePasse,
+      nouveau: nouveauMotDePasse,
+    );
+
+    if (!ok) {
+      return AuthResult(succes: false, messageErreur: 'Ancien mot de passe incorrect.');
+    }
+
     return AuthResult(succes: true);
   }
 }
