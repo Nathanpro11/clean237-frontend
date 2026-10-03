@@ -142,4 +142,34 @@ class FakeAuthRepository implements AuthRepository {
 
     return AuthResult(succes: true);
   }
+
+  @override
+  Future<AuthResult> reinitialiserMotDePasse({
+    required String email,
+    required String nouveauMotDePasse,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (nouveauMotDePasse.trim().length < 6) {
+      return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
+    }
+
+    final ok = _store.reinitialiserMotDePasse(
+      email: email,
+      nouveau: nouveauMotDePasse,
+    );
+
+    if (!ok) {
+      // Message volontairement générique (on ne confirme pas si l'email existe).
+      return AuthResult(
+        succes: false,
+        messageErreur: "Si ce compte existe, le mot de passe n'a pas pu être réinitialisé.",
+      );
+    }
+
+    // Déblocage anti-bruteforce associé, par cohérence.
+    _tentativesEchoueesParEmail.remove(email.trim().toLowerCase());
+
+    return AuthResult(succes: true);
+  }
 }
