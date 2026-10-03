@@ -11,31 +11,39 @@ class FakeAuthRepository implements AuthRepository {
 
   FakeAuthRepository(this._store);
 
-  int _tentativesEchouees = 0;
+  // 🔐 Anti-bruteforce PAR COMPTE : chaque email a son propre compteur
+  // d'échecs, pour ne jamais bloquer un compte à cause des tentatives
+  // ratées sur un autre.
+  final Map<String, int> _tentativesEchoueesParEmail = {};
+  static const int _seuilBlocage = 3;
+
   String? _emailConnecte;
 
   @override
   Future<AuthResult> login(String email, String motDepasse) async {
     await Future.delayed(const Duration(milliseconds: 800));
 
-    if (_tentativesEchouees >= 3) {
+    final emailNormalise = email.trim().toLowerCase();
+    final tentatives = _tentativesEchoueesParEmail[emailNormalise] ?? 0;
+
+    if (tentatives >= _seuilBlocage) {
       return AuthResult(
         succes: false,
         estBloqueAntiBruteforce: true,
         messageErreur:
-            'Trop de tentatives échouées. Compte temporairement bloqué (simulation).',
+            'Trop de tentatives échouées sur ce compte. Réessayez plus tard (simulation).',
       );
     }
 
-    final compte = _store.trouverParEmail(email);
-    final motDePasseAttendu = _store.motDePassePour(email);
+    final compte = _store.trouverParEmail(emailNormalise);
+    final motDePasseAttendu = _store.motDePassePour(emailNormalise);
 
     if (compte != null && motDePasseAttendu != null && motDepasse.trim() == motDePasseAttendu) {
       if (!compte.estActif) {
         return AuthResult(succes: false, messageErreur: 'Ce compte est désactivé.');
       }
 
-      _tentativesEchouees = 0;
+      _tentativesEchoueesParEmail.remove(emailNormalise);
       _emailConnecte = compte.email;
 
       final token = JwtHelper.creerTokenFactice({
@@ -48,7 +56,12 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: true, token: token, utilisateur: compte);
     }
 
-    _tentativesEchouees++;
+    // On n'incrémente le compteur que si le compte existe réellement :
+    // taper un email au hasard ne doit pas pouvoir bloquer un vrai compte.
+    if (compte != null) {
+      _tentativesEchoueesParEmail[emailNormalise] = tentatives + 1;
+    }
+
     return AuthResult(succes: false, messageErreur: 'Identifiants invalides.');
   }
 
