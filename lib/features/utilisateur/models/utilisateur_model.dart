@@ -25,7 +25,7 @@ class UtilisateurModel {
   factory UtilisateurModel.fromJson(Map<String, dynamic> json) {
     final roleData = json['roleId'] as Map<String, dynamic>? ?? {};
     final roleName = roleData['nom'] as String? ?? 'citoyen';
-    
+
     final permissionsList = (roleData['permissionsIds'] as List? ?? [])
         .map((p) => p is Map ? (p['nom'] as String? ?? '') : p.toString())
         .where((nom) => nom.isNotEmpty)
@@ -42,5 +42,23 @@ class UtilisateurModel {
       permissions: permissionsList,
       estActif: json['estActif'] as bool? ?? true,
     );
+  }
+
+  /// Sérialisation au même format que fromJson() attend, utilisée pour
+  /// la persistance locale (SharedPreferences) en mode sans backend.
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'nom': nom,
+      'email': email,
+      'telephone': telephone,
+      if (matricule != null) 'matricule': matricule,
+      if (zoneAffectee != null) 'zoneAffectee': zoneAffectee,
+      'roleId': {
+        'nom': roleNom,
+        'permissionsIds': permissions,
+      },
+      'estActif': estActif,
+    };
   }
 }

@@ -1,17 +1,76 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 
 /// Source UNIQUE des comptes utilisateurs simulés (mode sans backend).
 /// Partagée par FakeAuthRepository (connexion/inscription/profil) et
 /// FakeAdminRepository (gestion des comptes) : un compte créé, désactivé
 /// ou modifié d'un côté est immédiatement visible et effectif de l'autre.
+///
+/// Persisté localement (SharedPreferences) : les comptes créés pendant les
+/// tests survivent à la fermeture de l'application.
 class UtilisateursStore {
-  UtilisateursStore() {
-    _initialiserComptesDeDemo();
-  }
+  static const _cle = 'clean237_comptes_v1';
 
   final Map<String, UtilisateurModel> _comptes = {};
   final Map<String, String> _motsDePasse = {};
   int _prochainId = 1;
+
+  UtilisateursStore._();
+
+  /// Construction asynchrone : charge les comptes sauvegardés s'il y en a,
+  /// sinon initialise les comptes de démonstration.
+  static Future<UtilisateursStore> creer() async {
+    final store = UtilisateursStore._();
+    final charge = await store._chargerDepuisDisque();
+    if (!charge) {
+      store._initialiserComptesDeDemo();
+      await store._sauvegarder();
+    }
+    return store;
+  }
+
+  Future<bool> _chargerDepuisDisque() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final brut = prefs.getString(_cle);
+      if (brut == null) return false;
+
+      final liste = jsonDecode(brut) as List;
+      if (liste.isEmpty) return false;
+
+      int idMax = 0;
+      for (final entree in liste) {
+        final map = entree as Map<String, dynamic>;
+        final utilisateur = UtilisateurModel.fromJson(map['utilisateur'] as Map<String, dynamic>);
+        _comptes[utilisateur.email] = utilisateur;
+        _motsDePasse[utilisateur.email] = map['motDePasse'] as String;
+        final idNum = int.tryParse(utilisateur.id) ?? 0;
+        if (idNum > idMax) idMax = idNum;
+      }
+      _prochainId = idMax + 1;
+      return true;
+    } catch (_) {
+      // Lecture corrompue ou format inattendu : on repart sur les comptes de démo.
+      return false;
+    }
+  }
+
+  Future<void> _sauvegarder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final liste = _comptes.values
+          .map((u) => {
+                'utilisateur': u.toJson(),
+                'motDePasse': _motsDePasse[u.email],
+              })
+          .toList();
+      await prefs.setString(_cle, jsonEncode(liste));
+    } catch (_) {
+      // Persistance best-effort : une erreur d'écriture ne doit pas
+      // interrompre le fonctionnement de l'application.
+    }
+  }
 
   String _idSuivant() => '${_prochainId++}';
 
@@ -68,7 +127,6 @@ class UtilisateursStore {
       motDePasse: '123456',
     );
 
-    // Comptes de démonstration supplémentaires, visibles dans le tableau admin.
     _ajouter(
       UtilisateurModel(
         id: _idSuivant(),
@@ -106,7 +164,7 @@ class UtilisateursStore {
 
   List<UtilisateurModel> listerTous() => List.unmodifiable(_comptes.values);
 
-  UtilisateurModel creerCompte({
+  Future<UtilisateurModel> creerCompte({
     required String nom,
     required String email,
     required String telephone,
@@ -114,7 +172,7 @@ class UtilisateursStore {
     required String roleNom,
     String? matricule,
     String? zoneAffectee,
-  }) {
+  }) async {
     final emailNormalise = email.trim().toLowerCase();
 
     final permissionsParDefaut = roleNom == 'agent'
@@ -134,14 +192,15 @@ class UtilisateursStore {
     );
 
     _ajouter(nouveau, motDePasse: motDepasse.trim());
+    await _sauvegarder();
     return nouveau;
   }
 
-  UtilisateurModel mettreAJourProfil({
+  Future<UtilisateurModel> mettreAJourProfil({
     required String email,
     required String nom,
     required String telephone,
-  }) {
+  }) async {
     final emailNormalise = email.trim().toLowerCase();
     final actuel = _comptes[emailNormalise]!;
 
@@ -158,39 +217,41 @@ class UtilisateursStore {
     );
 
     _comptes[emailNormalise] = modifie;
+    await _sauvegarder();
     return modifie;
   }
 
-  bool changerMotDePasse({
+  Future<bool> changerMotDePasse({
     required String email,
     required String ancien,
     required String nouveau,
-  }) {
+  }) async {
     final emailNormalise = email.trim().toLowerCase();
     if (_motsDePasse[emailNormalise] != ancien.trim()) return false;
     _motsDePasse[emailNormalise] = nouveau.trim();
+    await _sauvegarder();
     return true;
   }
 
   /// Flux "mot de passe oublié" : réinitialise directement le mot de passe
   /// du compte correspondant à [email], sans exiger l'ancien mot de passe.
-  /// Renvoie false si l'email ne correspond à aucun compte.
-  bool reinitialiserMotDePasse({
+  Future<bool> reinitialiserMotDePasse({
     required String email,
     required String nouveau,
-  }) {
+  }) async {
     final emailNormalise = email.trim().toLowerCase();
     if (!_comptes.containsKey(emailNormalise)) return false;
     _motsDePasse[emailNormalise] = nouveau.trim();
+    await _sauvegarder();
     return true;
   }
 
-  UtilisateurModel mettreAJourDroits({
+  Future<UtilisateurModel> mettreAJourDroits({
     required String id,
     bool? estActif,
     String? roleNom,
     List<String>? permissions,
-  }) {
+  }) async {
     final entree = _comptes.entries.firstWhere((e) => e.value.id == id);
     final actuel = entree.value;
 
@@ -207,6 +268,7 @@ class UtilisateursStore {
     );
 
     _comptes[entree.key] = modifie;
+    await _sauvegarder();
     return modifie;
   }
 }

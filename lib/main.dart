@@ -9,9 +9,15 @@ import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_s
 import 'package:clean237_frontend/features/utilisateur/repository/fake_auth_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/splash_screen.dart';
 
-void main() {
+void main() async {
+  // Nécessaire avant tout appel asynchrone précédant runApp() (ici : la
+  // lecture de SharedPreferences pour charger les comptes persistés).
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Source unique des comptes simulés, partagée par Auth et Admin.
-  final utilisateursStore = UtilisateursStore();
+  // Chargée depuis le disque si des comptes y ont déjà été sauvegardés,
+  // sinon initialisée avec les comptes de démonstration.
+  final utilisateursStore = await UtilisateursStore.creer();
 
   runApp(
     // 🎯 CRITÈRE GRILLE : Initialisation et couplage de l'architecture MVVM / Providers

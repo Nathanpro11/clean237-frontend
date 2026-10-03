@@ -1,6 +1,6 @@
 import 'package:clean237_frontend/features/utilisateur/repository/auth_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
-import 'package:clean237_frontend/utils/jwt_helper.dart';
+import 'package:clean237_frontend/features/utilisateur/utils/jwt_helper.dart';
 
 /// Implémentation FACTICE d'AuthRepository (sans backend).
 /// Lit et écrit dans UtilisateursStore, partagé avec FakeAdminRepository :
@@ -81,7 +81,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: 'Cet email est déjà utilisé.');
     }
 
-    final nouveauCompte = _store.creerCompte(
+    final nouveauCompte = await _store.creerCompte(
       nom: nom,
       email: email,
       telephone: telephone,
@@ -110,7 +110,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: 'Le nom ne peut pas être vide.');
     }
 
-    final modifie = _store.mettreAJourProfil(email: email, nom: nom, telephone: telephone);
+    final modifie = await _store.mettreAJourProfil(email: email, nom: nom, telephone: telephone);
     return AuthResult(succes: true, utilisateur: modifie);
   }
 
@@ -130,7 +130,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
     }
 
-    final ok = _store.changerMotDePasse(
+    final ok = await _store.changerMotDePasse(
       email: email,
       ancien: ancienMotDePasse,
       nouveau: nouveauMotDePasse,
@@ -154,7 +154,7 @@ class FakeAuthRepository implements AuthRepository {
       return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
     }
 
-    final ok = _store.reinitialiserMotDePasse(
+    final ok = await _store.reinitialiserMotDePasse(
       email: email,
       nouveau: nouveauMotDePasse,
     );

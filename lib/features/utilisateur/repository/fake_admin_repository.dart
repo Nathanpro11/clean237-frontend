@@ -39,7 +39,7 @@ class FakeAdminRepository implements AdminRepository {
     List<String>? permissions,
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
-    return _store.mettreAJourDroits(
+    return await _store.mettreAJourDroits(
       id: id,
       estActif: estActif,
       roleNom: roleNom,
