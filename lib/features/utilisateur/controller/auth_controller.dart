@@ -113,6 +113,24 @@ class AuthController extends ChangeNotifier {
     return resultat.succes;
   }
 
+  /// Flux "mot de passe oublié", indépendant de toute session active.
+  Future<bool> reinitialiserMotDePasse({
+    required String email,
+    required String nouveauMotDePasse,
+  }) async {
+    _setChargement(true);
+    _messageErreur = null;
+
+    final resultat = await _repository.reinitialiserMotDePasse(
+      email: email,
+      nouveauMotDePasse: nouveauMotDePasse,
+    );
+
+    _messageErreur = resultat.messageErreur;
+    _setChargement(false);
+    return resultat.succes;
+  }
+
   void logout() {
     _utilisateurConnecte = null;
     _tokenJwt = null;

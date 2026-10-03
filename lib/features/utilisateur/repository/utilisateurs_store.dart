@@ -172,6 +172,19 @@ class UtilisateursStore {
     return true;
   }
 
+  /// Flux "mot de passe oublié" : réinitialise directement le mot de passe
+  /// du compte correspondant à [email], sans exiger l'ancien mot de passe.
+  /// Renvoie false si l'email ne correspond à aucun compte.
+  bool reinitialiserMotDePasse({
+    required String email,
+    required String nouveau,
+  }) {
+    final emailNormalise = email.trim().toLowerCase();
+    if (!_comptes.containsKey(emailNormalise)) return false;
+    _motsDePasse[emailNormalise] = nouveau.trim();
+    return true;
+  }
+
   UtilisateurModel mettreAJourDroits({
     required String id,
     bool? estActif,

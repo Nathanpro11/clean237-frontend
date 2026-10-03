@@ -6,7 +6,6 @@ import 'package:clean237_frontend/features/utilisateur/controller/auth_controlle
 import 'package:clean237_frontend/features/utilisateur/screen/inscription_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
-import 'package:clean237_frontend/features/utilisateur/screen/admin_dashboard_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
 
 class ConnexionScreen extends StatefulWidget {
@@ -44,14 +43,11 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
             backgroundColor: CleanCouleurs.vertEco,
           ),
         );
-        // 🎯 Résolution du rôle depuis le JWT : admin -> supervision municipale,
-        // agent -> dashboard terrain, sinon vue citoyen.
-        final role = authCtrl.role ?? 'citoyen';
-        final Widget ecranDestination = switch (role) {
-          'admin' => const AdminDashboardScreen(),
-          'agent' => const DashboardScreen(),
-          _ => const AccueilScreen(),
-        };
+        // 🎯 Navigation selon le rôle : citoyen -> Accueil, admin/agent -> Dashboard
+        final role = authCtrl.utilisateur?.roleNom ?? 'citoyen';
+        final ecranDestination = role == 'citoyen'
+            ? const AccueilScreen()
+            : const DashboardScreen();
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => ecranDestination),
@@ -213,7 +209,7 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () => _ouvrirDialogueMotDePasseOublie(context),
                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       child: const Text(
                         'Mot de passe oublié ?',
@@ -399,6 +395,101 @@ class _ConnexionScreenState extends State<ConnexionScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _ouvrirDialogueMotDePasseOublie(BuildContext context) {
+    final emailController = TextEditingController();
+    final nouveauMdpController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool etapeEmailValidee = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialogue) {
+            return AlertDialog(
+              title: const Text('Mot de passe oublié'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!etapeEmailValidee) ...[
+                      const Text(
+                        'Entrez votre email, nous simulons la réinitialisation (pas de vrai backend pour l\'instant).',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        validator: (v) => (v == null || !v.contains('@')) ? 'Email invalide' : null,
+                      ),
+                    ] else ...[
+                      Text(
+                        'Nouveau mot de passe pour ${emailController.text.trim()}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: nouveauMdpController,
+                        obscureText: true,
+                        decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
+                        validator: (v) => (v == null || v.length < 6) ? '6 caractères min.' : null,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco),
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+
+                    if (!etapeEmailValidee) {
+                      setStateDialogue(() => etapeEmailValidee = true);
+                      return;
+                    }
+
+                    final authCtrl = context.read<AuthController>();
+                    final succes = await authCtrl.reinitialiserMotDePasse(
+                      email: emailController.text.trim(),
+                      nouveauMotDePasse: nouveauMdpController.text,
+                    );
+
+                    if (dialogContext.mounted) Navigator.pop(dialogContext);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            succes
+                                ? 'Mot de passe réinitialisé. Connectez-vous avec le nouveau.'
+                                : (authCtrl.messageErreur ?? 'Échec de la réinitialisation.'),
+                          ),
+                          backgroundColor: succes ? CleanCouleurs.vertEco : CleanCouleurs.rougeAlerte,
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    etapeEmailValidee ? 'Réinitialiser' : 'Continuer',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

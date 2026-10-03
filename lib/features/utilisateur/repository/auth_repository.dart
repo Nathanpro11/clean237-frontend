@@ -29,7 +29,6 @@ abstract class AuthRepository {
     String? zoneAffectee,
   });
 
-  // 🆕 Fonctionnalités de base du module Utilisateur
   Future<AuthResult> modifierProfil({
     required String nom,
     required String telephone,
@@ -37,6 +36,13 @@ abstract class AuthRepository {
 
   Future<AuthResult> changerMotDePasse({
     required String ancienMotDePasse,
+    required String nouveauMotDePasse,
+  });
+
+  /// Flux "mot de passe oublié" : réinitialise directement le mot de passe
+  /// du compte correspondant à [email], sans exiger l'ancien.
+  Future<AuthResult> reinitialiserMotDePasse({
+    required String email,
     required String nouveauMotDePasse,
   });
 }
