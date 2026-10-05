@@ -60,7 +60,21 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
                   ? Center(
                       child: admin.enChargement
                           ? const CircularProgressIndicator(color: CleanCouleurs.vertEco)
-                          : Text(admin.messageErreur ?? 'Aucune donnée disponible.'),
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.wifi_off_outlined, size: 40, color: Colors.grey.shade400),
+                                const SizedBox(height: 12),
+                                Text(admin.messageErreur ?? 'Aucune donnée disponible.', style: const TextStyle(color: Colors.grey)),
+                                const SizedBox(height: 16),
+                                OutlinedButton.icon(
+                                  onPressed: () => context.read<AdminController>().chargerTableauDeBord(),
+                                  icon: const Icon(Icons.refresh, color: CleanCouleurs.vertEco, size: 18),
+                                  label: const Text('Réessayer', style: TextStyle(color: CleanCouleurs.vertEco)),
+                                  style: OutlinedButton.styleFrom(side: const BorderSide(color: CleanCouleurs.vertEco)),
+                                ),
+                              ],
+                            ),
                     )
                   : _buildContenu(stats),
             ),

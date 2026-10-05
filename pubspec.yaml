@@ -18,6 +18,8 @@ dependencies:
   # Icons pour les designs iOS additionnels
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^11.0.0
+  shared_preferences: ^2.5.5
+  flutter_form_builder: ^11.0.0
 
 dev_dependencies:
   flutter_test:

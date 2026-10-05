@@ -48,6 +48,33 @@ class FakeAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<UtilisateurModel> creerUtilisateur({
+    required String nom,
+    required String email,
+    required String telephone,
+    required String motDepasse,
+    required String roleNom,
+    String? matricule,
+    String? zoneAffectee,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (_store.emailExiste(email)) {
+      throw Exception('Cet email est déjà utilisé.');
+    }
+
+    return await _store.creerCompte(
+      nom: nom,
+      email: email,
+      telephone: telephone,
+      motDepasse: motDepasse,
+      roleNom: roleNom,
+      matricule: matricule,
+      zoneAffectee: zoneAffectee,
+    );
+  }
+
+  @override
   Future<String> dernierIpAudite(String utilisateurId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     return '192.168.88.95';

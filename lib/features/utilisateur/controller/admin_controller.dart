@@ -71,6 +71,37 @@ class AdminController extends ChangeNotifier {
     }
   }
 
+  /// Création directe d'un compte depuis le panneau admin.
+  Future<bool> creerUtilisateur({
+    required String nom,
+    required String email,
+    required String telephone,
+    required String motDepasse,
+    required String roleNom,
+    String? matricule,
+    String? zoneAffectee,
+  }) async {
+    _messageErreur = null;
+    try {
+      final nouveau = await _repository.creerUtilisateur(
+        nom: nom,
+        email: email,
+        telephone: telephone,
+        motDepasse: motDepasse,
+        roleNom: roleNom,
+        matricule: matricule,
+        zoneAffectee: zoneAffectee,
+      );
+      _utilisateurs = [..._utilisateurs, nouveau];
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _messageErreur = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<String> dernierIpAudite(String utilisateurId) {
     return _repository.dernierIpAudite(utilisateurId);
   }

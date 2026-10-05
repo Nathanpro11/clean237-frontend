@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
@@ -13,69 +15,58 @@ class InscriptionScreen extends StatefulWidget {
 }
 
 class _InscriptionScreenState extends State<InscriptionScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nomController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _telController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _matriculeController = TextEditingController();
-  final _zoneController = TextEditingController();
-
+  final _formKey = GlobalKey<FormBuilderState>();
   String _profilSelectionne = 'citoyen';
-  bool _accepteConditions = false;
   bool _masquerMotDePasse = true;
 
-  @override
-  void dispose() {
-    _nomController.dispose();
-    _emailController.dispose();
-    _telController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _matriculeController.dispose();
-    _zoneController.dispose();
-    super.dispose();
-  }
+  // Numéro mobile camerounais : préfixe +237/237 optionnel, puis 6 et 8 chiffres.
+  static final RegExp _regexTelephone = RegExp(r'^(\+?237)?6\d{8}$');
 
   void _validerEtInscrire() async {
-    if (!_accepteConditions) {
+    final estValide = _formKey.currentState?.saveAndValidate() ?? false;
+    if (!estValide) return;
+
+    final valeurs = _formKey.currentState!.value;
+
+    if (valeurs['conditions'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez accepter les Conditions d\'utilisation'), backgroundColor: CleanCouleurs.rougeAlerte),
+        const SnackBar(
+          content: Text('Veuillez accepter les Conditions d\'utilisation'),
+          backgroundColor: CleanCouleurs.rougeAlerte,
+        ),
       );
       return;
     }
 
-    if (_formKey.currentState!.validate()) {
-      final authCtrl = context.read<AuthController>();
+    final authCtrl = context.read<AuthController>();
+    final telephoneNettoye = (valeurs['telephone'] as String).replaceAll(RegExp(r'[\s-]'), '');
 
-      final succes = await authCtrl.inscrireUnUtilisateur(
-        nom: _nomController.text.trim(),
-        email: _emailController.text.trim().toLowerCase(),
-        telephone: _telController.text.trim(),
-        motDepasse: _passwordController.text.trim(),
-        profil: _profilSelectionne,
-        matricule: _profilSelectionne == 'agent' ? _matriculeController.text.trim() : null,
-        zoneAffectee: _profilSelectionne == 'agent' ? _zoneController.text.trim() : null,
+    final succes = await authCtrl.inscrireUnUtilisateur(
+      nom: (valeurs['nom'] as String).trim(),
+      email: (valeurs['email'] as String).trim().toLowerCase(),
+      telephone: telephoneNettoye,
+      motDepasse: valeurs['motDepasse'] as String,
+      profil: _profilSelectionne,
+      matricule: _profilSelectionne == 'agent' ? (valeurs['matricule'] as String?)?.trim() : null,
+      zoneAffectee: _profilSelectionne == 'agent' ? (valeurs['zone'] as String?)?.trim() : null,
+    );
+
+    if (succes && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Compte créé avec succès !'), backgroundColor: CleanCouleurs.vertEco),
       );
-
-      if (succes && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Compte créé avec succès !'), backgroundColor: CleanCouleurs.vertEco),
-        );
-        // Les onglets Connexion/Inscription utilisent pushReplacement, donc cet
-        // écran est seul dans la pile : Navigator.pop() planterait. On revient
-        // explicitement vers l'écran de connexion.
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ConnexionScreen()),
-        );
-      }
+      // Les onglets Connexion/Inscription utilisent pushReplacement, donc cet
+      // écran est seul dans la pile : Navigator.pop() planterait. On revient
+      // explicitement vers l'écran de connexion.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const ConnexionScreen()),
+      );
+    } else if (mounted && authCtrl.messageErreur != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authCtrl.messageErreur!), backgroundColor: CleanCouleurs.rougeAlerte),
+      );
     }
   }
-
-  static final RegExp _regexEmail = RegExp(
-    r'^[a-zA-Z0-9.!#$%&*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$',
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +83,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
+              child: FormBuilder(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,22 +101,12 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                         const SizedBox(width: 6),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            'assets/logo.jpeg',
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.asset('assets/logo.jpeg', width: 24, height: 24, fit: BoxFit.cover),
                         ),
                         const SizedBox(width: 10),
                         const Text(
                           'Clean237',
-                          style: TextStyle(
-                            color: CleanCouleurs.anthracite,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.3,
-                          ),
+                          style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.3),
                         ),
                       ],
                     ),
@@ -138,59 +119,118 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                     const SizedBox(height: 30),
 
                     _buildLabel('Nom complet'),
-                    TextFormField(controller: _nomController, decoration: _buildInputDecoration('Jean-Pierre Nguene', Icons.person_outline), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                    FormBuilderTextField(
+                      name: 'nom',
+                      decoration: _buildInputDecoration('Jean-Pierre Nguene', Icons.person_outline),
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(errorText: 'Requis'),
+                        FormBuilderValidators.minLength(2, errorText: 'Trop court'),
+                      ]),
+                    ),
                     const SizedBox(height: 18),
 
                     _buildLabel('Adresse Email'),
-                    TextFormField(controller: _emailController, decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !_regexEmail.hasMatch(v.trim())) ? 'Adresse email invalide' : null),
+                    FormBuilderTextField(
+                      name: 'email',
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: _buildInputDecoration('exemple@domain.com', Icons.mail_outline),
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(errorText: 'Requis'),
+                        FormBuilderValidators.email(errorText: 'Adresse email invalide'),
+                      ]),
+                    ),
                     const SizedBox(height: 18),
 
                     _buildLabel('Numéro de Téléphone'),
-                    TextFormField(controller: _telController, decoration: _buildInputDecoration('+237 6xx xx xx xx', Icons.phone_android_outlined), validator: (v) => (v == null || v.length < 9) ? 'Incomplet' : null),
+                    FormBuilderTextField(
+                      name: 'telephone',
+                      keyboardType: TextInputType.phone,
+                      decoration: _buildInputDecoration('+237 6xx xx xx xx', Icons.phone_android_outlined),
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(errorText: 'Requis'),
+                        (v) {
+                          final nettoye = (v ?? '').replaceAll(RegExp(r'[\s-]'), '');
+                          return _regexTelephone.hasMatch(nettoye)
+                              ? null
+                              : 'Numéro camerounais invalide (ex: 6XX XX XX XX)';
+                        },
+                      ]),
+                    ),
                     const SizedBox(height: 18),
 
                     _buildLabel('Type de Profil'),
-                    DropdownButtonFormField<String>(
-                      value: _profilSelectionne,
+                    FormBuilderDropdown<String>(
+                      name: 'profil',
+                      initialValue: _profilSelectionne,
                       decoration: _buildInputDecoration('', Icons.assignment_ind_outlined),
                       items: const [
                         DropdownMenuItem(value: 'citoyen', child: Text('Citoyen Standard')),
                         DropdownMenuItem(value: 'agent', child: Text('Agent de Collecte Terrain')),
                       ],
-                      onChanged: (val) => setState(() => _profilSelectionne = val!),
+                      onChanged: (val) => setState(() => _profilSelectionne = val ?? 'citoyen'),
                     ),
                     const SizedBox(height: 18),
 
                     if (_profilSelectionne == 'agent') ...[
                       _buildLabel('Matricule Professionnel'),
-                      TextFormField(controller: _matriculeController, decoration: _buildInputDecoration('Ex: AGT-237-001', Icons.badge_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                      FormBuilderTextField(
+                        name: 'matricule',
+                        decoration: _buildInputDecoration('Ex: AGT-237-001', Icons.badge_outlined),
+                        validator: FormBuilderValidators.required(errorText: 'Requis'),
+                      ),
                       const SizedBox(height: 18),
                       _buildLabel('Zone d\'affectation'),
-                      TextFormField(controller: _zoneController, decoration: _buildInputDecoration('Ex: Yaoundé VI', Icons.map_outlined), validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null),
+                      FormBuilderTextField(
+                        name: 'zone',
+                        decoration: _buildInputDecoration('Ex: Yaoundé VI', Icons.map_outlined),
+                        validator: FormBuilderValidators.required(errorText: 'Requis'),
+                      ),
                       const SizedBox(height: 18),
                     ],
 
                     _buildLabel('Mot de passe'),
-                    TextFormField(controller: _passwordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_outline, avecSuffix: true), validator: (v) => (v == null || v.length < 6) ? '6 caractères min.' : null),
+                    FormBuilderTextField(
+                      name: 'motDepasse',
+                      obscureText: _masquerMotDePasse,
+                      decoration: _buildInputDecoration('••••••••', Icons.lock_outline, avecSuffix: true),
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(errorText: 'Requis'),
+                        FormBuilderValidators.minLength(6, errorText: '6 caractères min.'),
+                      ]),
+                    ),
                     const SizedBox(height: 18),
 
                     _buildLabel('Confirmer le mot de passe'),
-                    TextFormField(controller: _confirmPasswordController, obscureText: _masquerMotDePasse, decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outlined), validator: (v) => (v != _passwordController.text) ? 'Mots de passe différents' : null),
+                    FormBuilderTextField(
+                      name: 'confirmationMotDepasse',
+                      obscureText: _masquerMotDePasse,
+                      decoration: _buildInputDecoration('••••••••', Icons.lock_clock_outlined),
+                      validator: (v) {
+                        final motDepasse = _formKey.currentState?.fields['motDepasse']?.value as String?;
+                        return (v != motDepasse) ? 'Mots de passe différents' : null;
+                      },
+                    ),
                     const SizedBox(height: 20),
 
-                    Row(
-                      children: [
-                        Checkbox(value: _accepteConditions, activeColor: CleanCouleurs.vertEco, onChanged: (val) => setState(() => _accepteConditions = val!)),
-                        const Expanded(
-                          child: Text('J\'accepte les Conditions d\'utilisation', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        ),
-                      ],
+                    FormBuilderCheckbox(
+                      name: 'conditions',
+                      initialValue: false,
+                      activeColor: CleanCouleurs.vertEco,
+                      title: const Text(
+                        'J\'accepte les Conditions d\'utilisation',
+                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
                     ),
                     const SizedBox(height: 25),
 
                     ElevatedButton(
                       onPressed: authCtrl.estEnCoursDeChargement ? null : _validerEtInscrire,
-                      style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CleanCouleurs.vertEco,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        elevation: 0,
+                      ),
                       child: authCtrl.estEnCoursDeChargement
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                           : const Text('S\'inscrire', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
@@ -206,13 +246,21 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
     );
   }
 
-  Widget _buildLabel(String txt) => Padding(padding: const EdgeInsets.only(bottom: 6.0), child: Text(txt, style: const TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.w600, fontSize: 14)));
+  Widget _buildLabel(String txt) => Padding(
+        padding: const EdgeInsets.only(bottom: 6.0),
+        child: Text(txt, style: const TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.w600, fontSize: 14)),
+      );
 
   InputDecoration _buildInputDecoration(String hint, IconData prefix, {bool avecSuffix = false}) {
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(prefix, color: CleanCouleurs.vertEco, size: 20),
-      suffixIcon: avecSuffix ? IconButton(icon: Icon(_masquerMotDePasse ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey, size: 20), onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse)) : null,
+      suffixIcon: avecSuffix
+          ? IconButton(
+              icon: Icon(_masquerMotDePasse ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey, size: 20),
+              onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse),
+            )
+          : null,
       contentPadding: const EdgeInsets.symmetric(vertical: 14),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CleanCouleurs.vertEco, width: 1.5)),

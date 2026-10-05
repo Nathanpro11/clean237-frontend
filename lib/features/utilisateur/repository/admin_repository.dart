@@ -1,3 +1,7 @@
+// ⚠️ CE FICHIER VA DANS : lib/features/utilisateur/repository/admin_repository.dart
+// Contient StatsAdmin + l'interface AdminRepository (dashboard, comptes, RBAC).
+// NE PAS CONFONDRE avec auth_repository.dart (AuthResult + AuthRepository).
+
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 
 class StatsAdmin {
@@ -29,6 +33,17 @@ abstract class AdminRepository {
     bool? estActif,
     String? roleNom,
     List<String>? permissions,
+  });
+
+  /// Création directe d'un compte depuis le panneau admin.
+  Future<UtilisateurModel> creerUtilisateur({
+    required String nom,
+    required String email,
+    required String telephone,
+    required String motDepasse,
+    required String roleNom,
+    String? matricule,
+    String? zoneAffectee,
   });
 
   Future<String> dernierIpAudite(String utilisateurId);
