@@ -11,37 +11,19 @@ import '../../../common/widgets/metric_card.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../common/widgets/zone_card.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../viewmodels/dashboard_cubit.dart';
+import '../viewmodels/dashboard_state.dart';
 
-class AdminDashboardPage extends StatefulWidget {
+class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
-
-  @override
-  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
-}
-
-class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  late final DashboardViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = DashboardViewModel(
-      adminRepository: context.read<AdminRepository>(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final isWide = !ResponsiveContainer.isMobile(context);
 
-    return AdminScaffold(
+    return BlocProvider(
+      create: (context) => DashboardCubit(context.read<AdminRepository>()),
+      child: AdminScaffold(
       currentNavIndex: 0,
       onNavTabSelected: (index) {
         if (index == 1) {
@@ -50,10 +32,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           context.go('/admin/reports');
         }
       },
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final zonesToWatch = _viewModel.zonesToWatch;
+      body: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          final viewModel = context.read<DashboardCubit>();
+          final zonesToWatch = state.zonesToWatch;
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -71,9 +53,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
                       // Metric cards (Responsive: Grid sur grands écrans, colonne sur mobile)
                       if (isWide)
-                        _buildWideMetrics(context)
+                        _buildWideMetrics(context, viewModel)
                       else
-                        _buildMobileMetrics(context),
+                        _buildMobileMetrics(context, viewModel),
 
                       const SizedBox(height: 20),
 
@@ -140,33 +122,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           );
         },
       ),
+      ),
     );
   }
 
-  Widget _buildMobileMetrics(BuildContext context) {
+  Widget _buildMobileMetrics(BuildContext context, DashboardCubit viewModel) {
     return Column(
       children: [
         MetricCard.zones(
-          count: _viewModel.totalZonesCount,
+          count: viewModel.totalZonesCount,
           onTap: () => context.push('/admin/zones'),
         ),
         MetricCard.critical(
-          count: _viewModel.criticalZonesCount,
+          count: viewModel.criticalZonesCount,
           onTap: () => context.push('/admin/zones/critical'),
         ),
         MetricCard.alerts(
-          count: _viewModel.activeAlertsCount,
+          count: viewModel.activeAlertsCount,
           onTap: () => context.push('/admin/alerts'),
         ),
         MetricCard.reports(
-          count: _viewModel.totalReportsCount,
+          count: viewModel.totalReportsCount,
           onTap: () => context.go('/admin/reports'),
         ),
       ],
     );
   }
 
-  Widget _buildWideMetrics(BuildContext context) {
+  Widget _buildWideMetrics(BuildContext context, DashboardCubit viewModel) {
     return GridView.count(
       crossAxisCount: 2,
       childAspectRatio: 3.8,
@@ -176,19 +159,19 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       mainAxisSpacing: 8,
       children: [
         MetricCard.zones(
-          count: _viewModel.totalZonesCount,
+          count: viewModel.totalZonesCount,
           onTap: () => context.push('/admin/zones'),
         ),
         MetricCard.critical(
-          count: _viewModel.criticalZonesCount,
+          count: viewModel.criticalZonesCount,
           onTap: () => context.push('/admin/zones/critical'),
         ),
         MetricCard.alerts(
-          count: _viewModel.activeAlertsCount,
+          count: viewModel.activeAlertsCount,
           onTap: () => context.push('/admin/alerts'),
         ),
         MetricCard.reports(
-          count: _viewModel.totalReportsCount,
+          count: viewModel.totalReportsCount,
           onTap: () => context.go('/admin/reports'),
         ),
       ],

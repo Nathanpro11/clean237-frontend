@@ -10,42 +10,25 @@ import '../../../common/widgets/empty_state.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../common/widgets/zone_card.dart';
-import '../viewmodels/zones_viewmodel.dart';
+import '../viewmodels/zones_cubit.dart';
+import '../viewmodels/zones_state.dart';
 
-class AdminCriticalZonesPage extends StatefulWidget {
+class AdminCriticalZonesPage extends StatelessWidget {
   const AdminCriticalZonesPage({super.key});
-
-  @override
-  State<AdminCriticalZonesPage> createState() => _AdminCriticalZonesPageState();
-}
-
-class _AdminCriticalZonesPageState extends State<AdminCriticalZonesPage> {
-  late final ZonesViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = ZonesViewModel(
-      adminRepository: context.read<AdminRepository>(),
-      initialFilter: 'Critique',
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final isWide = !ResponsiveContainer.isMobile(context);
 
-    return AdminScaffold(
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final criticalZones = _viewModel.filteredZones;
+    return BlocProvider(
+      create: (context) => ZonesCubit(
+        context.read<AdminRepository>(),
+        initialFilter: 'Critique',
+      ),
+      child: AdminScaffold(
+        body: BlocBuilder<ZonesCubit, ZonesState>(
+          builder: (context, state) {
+          final criticalZones = state.zones;
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -136,7 +119,8 @@ class _AdminCriticalZonesPageState extends State<AdminCriticalZonesPage> {
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }

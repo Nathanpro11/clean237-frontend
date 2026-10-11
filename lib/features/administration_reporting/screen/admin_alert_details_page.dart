@@ -12,7 +12,8 @@ import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../models/alert_model.dart';
-import '../viewmodels/alerts_viewmodel.dart';
+import '../viewmodels/alerts_cubit.dart';
+import '../viewmodels/alerts_state.dart';
 
 class AdminAlertDetailsPage extends StatefulWidget {
   final String alertId;
@@ -24,25 +25,45 @@ class AdminAlertDetailsPage extends StatefulWidget {
 }
 
 class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
-  late final AlertsViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = AlertsViewModel(
-      adminRepository: context.read<AdminRepository>(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final alert = _viewModel.getAlertById(widget.alertId);
+    return BlocProvider(
+      create: (context) => AlertsCubit(context.read<AdminRepository>()),
+      child: BlocListener<AlertsCubit, AlertsState>(
+        listenWhen: (previous, current) =>
+            previous.resolutionMessage != current.resolutionMessage &&
+            current.resolutionMessage != null,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.resolutionMessage!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/admin/alerts');
+          }
+        },
+        child: BlocBuilder<AlertsCubit, AlertsState>(
+          builder: (context, state) {
+    final alert = context.read<AlertsCubit>().getAlertById(widget.alertId);
 
     if (alert == null) {
       return _buildAlertNotFound(context);
@@ -259,7 +280,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
                 ),
                 onPressed: () => _confirmResolution(
                   context,
-                  _viewModel,
+                  context.read<AlertsCubit>(),
                   alert,
                   actionButtonLabel,
                 ),
@@ -269,11 +290,15 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
         ],
       ),
     );
+        },
+      ),
+      ),
+    );
   }
 
   void _confirmResolution(
     BuildContext context,
-    AlertsViewModel viewModel,
+    AlertsCubit viewModel,
     AdminAlert alert,
     String actionLabel,
   ) {
@@ -305,33 +330,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
       ),
     ).then((confirmed) {
       if (confirmed == true && context.mounted) {
-        viewModel.resolveAlert(alert.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'L’action "$actionLabel" a été validée avec succès.',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/admin/alerts');
-        }
+        viewModel.resolveAlert(alert.id, actionLabel);
       }
     });
   }

@@ -14,7 +14,8 @@ import '../../../common/widgets/report_card.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
-import '../viewmodels/reports_viewmodel.dart';
+import '../viewmodels/reports_cubit.dart';
+import '../viewmodels/reports_state.dart';
 
 class AdminReportsPage extends StatefulWidget {
   const AdminReportsPage({super.key});
@@ -24,22 +25,17 @@ class AdminReportsPage extends StatefulWidget {
 }
 
 class _AdminReportsPageState extends State<AdminReportsPage> {
-  late final ReportsViewModel _viewModel;
   late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ReportsViewModel(
-      adminRepository: context.read<AdminRepository>(),
-    );
-    _searchController = TextEditingController(text: _viewModel.searchQuery);
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _viewModel.dispose();
     super.dispose();
   }
 
@@ -47,7 +43,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   Widget build(BuildContext context) {
     final isWide = !ResponsiveContainer.isMobile(context);
 
-    return AdminScaffold(
+    return BlocProvider(
+      create: (context) => ReportsCubit(context.read<AdminRepository>()),
+      child: AdminScaffold(
       currentNavIndex: 2,
       onNavTabSelected: (index) {
         if (index == 0) {
@@ -56,10 +54,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           context.go('/admin/zones');
         }
       },
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final filteredReports = _viewModel.filteredReports;
+      body: BlocBuilder<ReportsCubit, ReportsState>(
+        builder: (context, state) {
+          final viewModel = context.read<ReportsCubit>();
+          final filteredReports = state.reports;
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -85,8 +83,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                       AppSearchField(
                         controller: _searchController,
                         hintText: 'Rechercher un rapport...',
-                        onChanged: _viewModel.setSearchQuery,
-                        onClear: () => _viewModel.setSearchQuery(''),
+                        onChanged: viewModel.setSearchQuery,
+                        onClear: () => viewModel.setSearchQuery(''),
                       ),
                       const SizedBox(height: 14),
 
@@ -95,9 +93,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                         children: [
                           Expanded(
                             child: FilterChipGroup(
-                              filters: _viewModel.statusFilters,
-                              selectedFilter: _viewModel.selectedStatus,
-                              onSelected: _viewModel.setStatusFilter,
+                              filters: ReportsCubit.statusFilters,
+                              selectedFilter: state.selectedStatus,
+                              onSelected: viewModel.setStatusFilter,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -136,7 +134,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                               label: 'Réinitialiser les filtres',
                               onPressed: () {
                                 _searchController.clear();
-                                _viewModel.resetFilters();
+                                viewModel.resetFilters();
                               },
                             ),
                           ),
@@ -182,6 +180,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
             ],
           );
         },
+      ),
       ),
     );
   }

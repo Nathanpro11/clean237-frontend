@@ -14,7 +14,7 @@ import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../models/zone_model.dart';
-import '../viewmodels/zone_details_viewmodel.dart';
+import '../viewmodels/zone_details_cubit.dart';
 
 class AdminZoneDetailsPage extends StatefulWidget {
   final String zoneId;
@@ -26,31 +26,17 @@ class AdminZoneDetailsPage extends StatefulWidget {
 }
 
 class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
-  late final ZoneDetailsViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = ZoneDetailsViewModel(
-      zoneId: widget.zoneId,
-      adminRepository: context.read<AdminRepository>(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return AdminScaffold(
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final zone = _viewModel.zone;
-          final alerts = _viewModel.alerts;
+    return BlocProvider(
+      create: (context) =>
+          ZoneDetailsCubit(context.read<AdminRepository>(), widget.zoneId),
+      child: AdminScaffold(
+        body: BlocBuilder<ZoneDetailsCubit, ZoneDetailsState>(
+          builder: (context, state) {
+          final viewModel = context.read<ZoneDetailsCubit>();
+          final zone = state.zone;
+          final alerts = state.alerts;
 
           if (zone == null) {
             return _buildZoneNotFound(context);
@@ -76,7 +62,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                               context.go('/admin/zones');
                             }
                           },
-                        ),
+                          ),
 
                         // Top score and stats summary card
                         _buildSummaryCard(zone),
@@ -108,12 +94,12 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                             ),
                             child: Column(
                               children: zone.priorities.map((priority) {
-                                final isDone = _viewModel.isPriorityCompleted(
+                                final isDone = viewModel.isPriorityCompleted(
                                   priority,
                                 );
                                 return InkWell(
                                   onTap: () =>
-                                      _viewModel.togglePriority(priority),
+                                      viewModel.togglePriority(priority),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 6,
@@ -271,6 +257,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
             ],
           );
         },
+      ),
       ),
     );
   }

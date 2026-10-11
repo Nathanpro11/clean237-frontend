@@ -14,7 +14,7 @@ import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../common/widgets/zone_score_gauge.dart';
-import '../viewmodels/zone_details_viewmodel.dart';
+import '../viewmodels/zone_details_cubit.dart';
 
 class AdminZoneAnalysisPage extends StatefulWidget {
   final String zoneId;
@@ -26,31 +26,18 @@ class AdminZoneAnalysisPage extends StatefulWidget {
 }
 
 class _AdminZoneAnalysisPageState extends State<AdminZoneAnalysisPage> {
-  late final ZoneDetailsViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = ZoneDetailsViewModel(
-      zoneId: widget.zoneId,
-      adminRepository: context.read<AdminRepository>(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final zone = _viewModel.zone;
-    if (zone == null) {
-      return _buildZoneNotFound(context);
-    }
-
-    return AdminScaffold(
+    return BlocProvider(
+      create: (context) =>
+          ZoneDetailsCubit(context.read<AdminRepository>(), widget.zoneId),
+      child: BlocBuilder<ZoneDetailsCubit, ZoneDetailsState>(
+        builder: (context, state) {
+          final zone = state.zone;
+          if (zone == null) {
+            return _buildZoneNotFound(context);
+          }
+          return AdminScaffold(
       body: Column(
         children: [
           Expanded(
@@ -244,6 +231,9 @@ class _AdminZoneAnalysisPageState extends State<AdminZoneAnalysisPage> {
             ),
           ),
         ],
+      ),
+          );
+        },
       ),
     );
   }

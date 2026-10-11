@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:clean237_frontend/main.dart';
 import 'package:clean237_frontend/common/widgets/filter_chip_group.dart';
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
-import 'package:clean237_frontend/features/administration_reporting/controller/admin_export_controller.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_generate_report_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_details_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_analysis_page.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_cubit.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_state.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_bloc.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_event.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_state.dart';
 
 void main() {
   testWidgets(
@@ -111,20 +116,66 @@ void main() {
     expect(find.text('Générer un rapport pour cette zone'), findsOneWidget);
   });
 
-  testWidgets('AdminExportController handles export flow', (
-    WidgetTester tester,
-  ) async {
-    final controller = AdminExportController();
-    expect(controller.status, ExportStatus.idle);
-    expect(controller.isExporting, false);
+  test('ExportCubit handles export flow', () async {
+    final cubit = ExportCubit();
+    expect(cubit.state.status, ExportStatus.initial);
+    expect(cubit.state.isExporting, false);
 
-    final future = controller.startExport(
-      reportTitle: 'Test Report',
-      delay: Duration.zero,
-    );
-    await future;
-    expect(controller.status, ExportStatus.success);
-    expect(controller.generatedFilePath, isNotNull);
+    await cubit.startExport(reportTitle: 'Test Report', delay: Duration.zero);
+    expect(cubit.state.status, ExportStatus.success);
+    expect(cubit.state.generatedFilePath, isNotNull);
+    await cubit.close();
+  });
+
+  test('GenerateReportBloc validates and persists a report', () async {
+    final repository = AdminRepository();
+    final bloc = GenerateReportBloc(repository);
+    try {
+      final validation = bloc.stream.firstWhere(
+        (state) => state.notesError != null,
+      );
+      bloc.add(NotesChanged('x' * 301));
+      expect(
+        (await validation.timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => throw StateError('NotesChanged non émis'),
+        )).notesError,
+        isNotNull,
+      );
+
+      final invalidSubmission = bloc.stream.firstWhere(
+        (state) => state.submissionStatus == SubmissionStatus.failure,
+      );
+      bloc.add(const SubmitPressed());
+      await invalidSubmission.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw StateError('SubmitPressed invalide non émis'),
+      );
+      expect(repository.getReports(), hasLength(4));
+
+      final notesCleared = bloc.stream.firstWhere(
+        (state) => state.notesError == null && state.notes.isEmpty,
+      );
+      bloc.add(const NotesChanged(''));
+      await notesCleared.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw StateError('NotesChanged valide non émis'),
+      );
+
+      final successfulSubmission = bloc.stream.firstWhere(
+        (state) => state.submissionStatus == SubmissionStatus.success,
+      );
+      bloc.add(const SubmitPressed());
+      final result = await successfulSubmission.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw StateError('Soumission valide non terminée'),
+      );
+      expect(result.generatedFilePath, endsWith('.pdf'));
+      expect(repository.getReports(), hasLength(5));
+    } finally {
+      await bloc.close();
+      repository.dispose();
+    }
   });
 
   testWidgets('AdminRepository handles data updates', (
@@ -134,6 +185,7 @@ void main() {
     expect(repo.allZones.length, 12);
     expect(repo.criticalZones.length, 2);
     expect(repo.allAlerts.length, 7);
+    repo.dispose();
   });
 
   testWidgets('Admin report and zone detail fit common viewport widths', (
@@ -149,8 +201,12 @@ void main() {
       tester.view.devicePixelRatio = 1;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: AdminGenerateReportPage(key: ValueKey('report-$width')),
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
+            home: AdminGenerateReportPage(key: ValueKey('report-$width')),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -161,10 +217,14 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: AdminZoneDetailsPage(
-            key: ValueKey('zone-$width'),
-            zoneId: 'mfoundi-centre',
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
+            home: AdminZoneDetailsPage(
+              key: ValueKey('zone-$width'),
+              zoneId: 'mfoundi-centre',
+            ),
           ),
         ),
       );
@@ -176,7 +236,13 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(home: AdminZoneAnalysisPage(zoneId: 'mfoundi-centre')),
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
+            home: AdminZoneAnalysisPage(zoneId: 'mfoundi-centre'),
+          ),
+        ),
       );
       await tester.pumpAndSettle();
       expect(

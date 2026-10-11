@@ -14,7 +14,8 @@ import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../common/widgets/zone_card.dart';
-import '../viewmodels/zones_viewmodel.dart';
+import '../viewmodels/zones_cubit.dart';
+import '../viewmodels/zones_state.dart';
 
 class AdminZonesPage extends StatefulWidget {
   final String? initialFilter;
@@ -26,23 +27,17 @@ class AdminZonesPage extends StatefulWidget {
 }
 
 class _AdminZonesPageState extends State<AdminZonesPage> {
-  late final ZonesViewModel _viewModel;
   late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ZonesViewModel(
-      adminRepository: context.read<AdminRepository>(),
-      initialFilter: widget.initialFilter,
-    );
-    _searchController = TextEditingController(text: _viewModel.searchQuery);
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _viewModel.dispose();
     super.dispose();
   }
 
@@ -50,7 +45,12 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
   Widget build(BuildContext context) {
     final isWide = !ResponsiveContainer.isMobile(context);
 
-    return AdminScaffold(
+    return BlocProvider(
+      create: (context) => ZonesCubit(
+        context.read<AdminRepository>(),
+        initialFilter: widget.initialFilter,
+      ),
+      child: AdminScaffold(
       currentNavIndex: 1,
       onNavTabSelected: (index) {
         if (index == 0) {
@@ -59,10 +59,10 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
           context.go('/admin/reports');
         }
       },
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final filteredZones = _viewModel.filteredZones;
+      body: BlocBuilder<ZonesCubit, ZonesState>(
+        builder: (context, state) {
+          final viewModel = context.read<ZonesCubit>();
+          final filteredZones = state.zones;
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -92,14 +92,14 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
                               color: AppColors.textPrimary,
                               size: 20,
                             ),
-                            onSelected: _viewModel.setSortOption,
+                            onSelected: viewModel.setSortOption,
                             itemBuilder: (context) => [
                               for (final option in ZoneSortOption.values)
                                 PopupMenuItem(
                                   value: option,
                                   child: Row(
                                     children: [
-                                      if (_viewModel.sortOption == option)
+                                      if (state.sortOption == option)
                                         const Icon(
                                           Icons.check_rounded,
                                           size: 18,
@@ -113,7 +113,7 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
                                         style: AppTextStyles.body.copyWith(
                                           fontSize: 13,
                                           fontWeight:
-                                              _viewModel.sortOption == option
+                                              state.sortOption == option
                                               ? FontWeight.w700
                                               : FontWeight.w400,
                                         ),
@@ -128,23 +128,23 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
                       AppSearchField(
                         controller: _searchController,
                         hintText: 'Rechercher une zone',
-                        onChanged: _viewModel.setSearchQuery,
-                        onClear: () => _viewModel.setSearchQuery(''),
+                        onChanged: viewModel.setSearchQuery,
+                        onClear: viewModel.clearSearchQuery,
                       ),
                       const SizedBox(height: 14),
                       Row(
                         children: [
                           Expanded(
                             child: FilterChipGroup(
-                              filters: _viewModel.filters,
-                              selectedFilter: _viewModel.selectedFilter,
-                              onSelected: _viewModel.setFilter,
+                              filters: ZonesCubit.filters,
+                              selectedFilter: state.selectedFilter,
+                              onSelected: viewModel.setFilter,
                             ),
                           ),
                           const SizedBox(width: 8),
                           StatusBadge.count(
                             label:
-                                '${filteredZones.length} / ${_viewModel.totalCount}',
+                                '${filteredZones.length} / ${state.totalCount}',
                           ),
                         ],
                       ),
@@ -172,7 +172,7 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
                               label: 'Réinitialiser les filtres',
                               onPressed: () {
                                 _searchController.clear();
-                                _viewModel.resetFilters();
+                                viewModel.resetFilters();
                               },
                             ),
                           ),
@@ -219,6 +219,7 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
             ],
           );
         },
+      ),
       ),
     );
   }

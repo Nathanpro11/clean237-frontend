@@ -13,7 +13,8 @@ import '../../../common/widgets/filter_chip_group.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
-import '../viewmodels/alerts_viewmodel.dart';
+import '../viewmodels/alerts_cubit.dart';
+import '../viewmodels/alerts_state.dart';
 
 class AdminAlertsPage extends StatefulWidget {
   const AdminAlertsPage({super.key});
@@ -23,22 +24,17 @@ class AdminAlertsPage extends StatefulWidget {
 }
 
 class _AdminAlertsPageState extends State<AdminAlertsPage> {
-  late final AlertsViewModel _viewModel;
   late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = AlertsViewModel(
-      adminRepository: context.read<AdminRepository>(),
-    );
-    _searchController = TextEditingController(text: _viewModel.searchQuery);
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _viewModel.dispose();
     super.dispose();
   }
 
@@ -46,11 +42,13 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
   Widget build(BuildContext context) {
     final isWide = !ResponsiveContainer.isMobile(context);
 
-    return AdminScaffold(
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final filteredAlerts = _viewModel.filteredAlerts;
+    return BlocProvider(
+      create: (context) => AlertsCubit(context.read<AdminRepository>()),
+      child: AdminScaffold(
+      body: BlocBuilder<AlertsCubit, AlertsState>(
+        builder: (context, state) {
+          final viewModel = context.read<AlertsCubit>();
+          final filteredAlerts = state.alerts;
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -76,17 +74,17 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                       AppSearchField(
                         controller: _searchController,
                         hintText: 'Rechercher une alerte, un quartier...',
-                        onChanged: _viewModel.setSearchQuery,
-                        onClear: () => _viewModel.setSearchQuery(''),
+                        onChanged: viewModel.setSearchQuery,
+                        onClear: () => viewModel.setSearchQuery(''),
                       ),
                       const SizedBox(height: 14),
                       Row(
                         children: [
                           Expanded(
                             child: FilterChipGroup(
-                              filters: _viewModel.filters,
-                              selectedFilter: _viewModel.selectedFilter,
-                              onSelected: _viewModel.setFilter,
+                              filters: AlertsCubit.filters,
+                              selectedFilter: state.selectedFilter,
+                              onSelected: viewModel.setFilter,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -124,7 +122,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                               label: 'Réinitialiser les filtres',
                               onPressed: () {
                                 _searchController.clear();
-                                _viewModel.resetFilters();
+                                viewModel.resetFilters();
                               },
                             ),
                           ),
@@ -169,6 +167,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
             ],
           );
         },
+      ),
       ),
     );
   }
