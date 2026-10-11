@@ -12,11 +12,13 @@ import '../../../common/widgets/secondary_button.dart';
 class AdminExportFailurePage extends StatelessWidget {
   final String title;
   final String? errorMessage;
+  final String? retryPath;
 
   const AdminExportFailurePage({
     super.key,
     required this.title,
     this.errorMessage,
+    this.retryPath,
   });
 
   @override
@@ -61,14 +63,16 @@ class AdminExportFailurePage extends StatelessWidget {
               ),
               const Spacer(),
               PrimaryButton(
-                label: 'Réessayer la génération',
+                label: 'Réessayer',
                 icon: const Icon(
                   Icons.refresh_rounded,
                   color: Colors.white,
                   size: 20,
                 ),
                 onPressed: () {
-                  if (context.canPop()) {
+                  if (retryPath != null) {
+                    context.go(retryPath!);
+                  } else if (context.canPop()) {
                     context.pop();
                   } else {
                     context.go(AppRoutes.generateReport());

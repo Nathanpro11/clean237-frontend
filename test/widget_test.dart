@@ -116,10 +116,20 @@ void main() {
     await tester.tap(find.text('Générer une Analyse'));
     await tester.pumpAndSettle();
 
-    // Verify Analysis Page
-    expect(find.text('Analyse approfondie'), findsOneWidget);
-    expect(find.text('Diagnostic & Interprétation'), findsOneWidget);
-    expect(find.text('Générer un rapport pour cette zone'), findsOneWidget);
+    expect(find.text('Nouvelle analyse'), findsOneWidget);
+    expect(find.text('1. Analyse  ›  2. Rapport'), findsOneWidget);
+    await tester.tap(find.text('Lancer l’analyse'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Résultat de l’analyse'), findsOneWidget);
+    await tester.tap(find.text('Générer un rapport à partir de cette analyse'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Analyse associée'), findsOneWidget);
+    expect(find.text('Générer le rapport'), findsOneWidget);
+    await tester.tap(find.text('Générer le rapport'));
+    await tester.pumpAndSettle();
+    expect(find.text('Rapport exporté avec succès'), findsOneWidget);
   });
 
   test('ExportCubit handles export flow', () async {
@@ -135,41 +145,58 @@ void main() {
 
   test('GenerateReportBloc validates and persists a report', () async {
     final repository = AdminRepository();
-    final bloc = GenerateReportBloc(repository);
+    final analysis = repository.generateAnalysis(
+      periodStart: DateTime(2026, 10, 1),
+      periodEnd: DateTime(2026, 10, 7),
+      zoneIds: ['mfoundi-centre'],
+    );
+    final bloc = GenerateReportBloc(repository, analysisId: analysis.id);
     try {
-      final validation = bloc.stream.firstWhere(
-        (state) => state.notesError != null,
+      final initialized = bloc.stream.firstWhere(
+        (state) => state.status == ReportFormStatus.ready,
       );
-      bloc.add(NotesChanged('x' * 301));
-      expect(
-        (await validation.timeout(
-          const Duration(seconds: 3),
-          onTimeout: () => throw StateError('NotesChanged non émis'),
-        )).notesError,
-        isNotNull,
+      await initialized.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw StateError('Initialisation rapport non émise'),
       );
 
+      bloc.add(NotesChanged('x' * 301));
       final invalidSubmission = bloc.stream.firstWhere(
-        (state) => state.submissionStatus == SubmissionStatus.failure,
+        (state) =>
+            state.status == ReportFormStatus.failure &&
+            state.descriptionError != null,
       );
       bloc.add(const SubmitPressed());
       await invalidSubmission.timeout(
         const Duration(seconds: 3),
-        onTimeout: () => throw StateError('SubmitPressed invalide non émis'),
+        onTimeout: () => throw StateError('Validation invalide non émise'),
       );
       expect(repository.getReports(), hasLength(4));
 
-      final notesCleared = bloc.stream.firstWhere(
-        (state) => state.notesError == null && state.notes.isEmpty,
+      final descriptionCleared = bloc.stream.firstWhere(
+        (state) => state.descriptionError == null && state.description.isEmpty,
       );
       bloc.add(const NotesChanged(''));
-      await notesCleared.timeout(
+      await descriptionCleared.timeout(
         const Duration(seconds: 3),
         onTimeout: () => throw StateError('NotesChanged valide non émis'),
       );
 
+      final failedGeneration = bloc.stream.firstWhere(
+        (state) =>
+            state.status == ReportFormStatus.failure &&
+            state.errorMessage != null,
+      );
+      bloc.add(const SubmitPressed(simulateFailure: true));
+      final failure = await failedGeneration.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw StateError('Échec simulé non émis'),
+      );
+      expect(failure.title, isNotEmpty);
+      expect(repository.getReports(), hasLength(4));
+
       final successfulSubmission = bloc.stream.firstWhere(
-        (state) => state.submissionStatus == SubmissionStatus.success,
+        (state) => state.status == ReportFormStatus.success,
       );
       bloc.add(const SubmitPressed());
       final result = await successfulSubmission.timeout(
@@ -178,6 +205,7 @@ void main() {
       );
       expect(result.generatedFilePath, endsWith('.pdf'));
       expect(repository.getReports(), hasLength(5));
+      expect(repository.getReports().first.analysisId, analysis.id);
     } finally {
       await bloc.close();
       repository.dispose();
@@ -323,7 +351,10 @@ void main() {
           create: (_) => AdminRepository(),
           dispose: (repository) => repository.dispose(),
           child: MaterialApp(
-            home: AdminGenerateReportPage(key: ValueKey('report-$width')),
+            home: AdminGenerateReportPage(
+              key: ValueKey('report-$width'),
+              analysisId: 'analysis_demo_default',
+            ),
           ),
         ),
       );

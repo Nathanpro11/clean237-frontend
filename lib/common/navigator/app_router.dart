@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/administration_reporting/models/report_model.dart';
 import 'app_routes.dart';
 import '../../features/administration_reporting/screen/admin_alerts_page.dart';
 import '../../features/administration_reporting/screen/admin_alert_details_page.dart';
@@ -12,7 +13,6 @@ import '../../features/administration_reporting/screen/admin_generate_report_pag
 import '../../features/administration_reporting/screen/admin_new_analysis_page.dart';
 import '../../features/administration_reporting/screen/admin_report_preview_page.dart';
 import '../../features/administration_reporting/screen/admin_reports_page.dart';
-import '../../features/administration_reporting/screen/admin_zone_analysis_page.dart';
 import '../../features/administration_reporting/screen/admin_zone_details_page.dart';
 import '../../features/administration_reporting/screen/admin_zones_page.dart';
 
@@ -75,16 +75,9 @@ abstract final class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.zoneAnalysisSegment,
-                builder: (context, state) {
-                  final zoneId = state.pathParameters['zoneId'];
-                  if (zoneId == null || zoneId.isEmpty) {
-                    return const AdminExportFailurePage(
-                      title: 'Zone introuvable',
-                      errorMessage: 'Aucun identifiant de zone n’a été fourni.',
-                    );
-                  }
-                  return AdminZoneAnalysisPage(zoneId: zoneId);
-                },
+                redirect: (context, state) => AppRoutes.newAnalysis(
+                  zoneId: state.pathParameters['zoneId'],
+                ),
               ),
             ],
           ),
@@ -108,14 +101,25 @@ abstract final class AppRouter {
         builder: (context, state) => const AdminReportsPage(),
         routes: [
           GoRoute(
+            path: AppRoutes.newReportSegment,
+            builder: (context, state) => AdminGenerateReportPage(
+              analysisId: state.uri.queryParameters['analyseId'],
+              initialTitle: state.uri.queryParameters['title'],
+              initialDescription:
+                  state.uri.queryParameters['description'] ?? '',
+              initialFormat: ReportFormat.values.firstWhere(
+                (format) => format.name == state.uri.queryParameters['format'],
+                orElse: () => ReportFormat.pdf,
+              ),
+            ),
+          ),
+          GoRoute(
             path: AppRoutes.generateReportSegment,
-            builder: (context, state) {
-              final preselectedZoneId =
-                  state.uri.queryParameters['preselectedZoneId'];
-              return AdminGenerateReportPage(
-                preselectedZoneId: preselectedZoneId,
-              );
-            },
+            redirect: (context, state) => AppRoutes.newAnalysis(
+              zoneId:
+                  state.uri.queryParameters['zoneId'] ??
+                  state.uri.queryParameters['preselectedZoneId'],
+            ),
           ),
           GoRoute(
             path: AppRoutes.reportIdSegment,
@@ -139,7 +143,20 @@ abstract final class AppRouter {
         builder: (context, state) {
           final title = state.uri.queryParameters['title'] ?? 'Rapport';
           final error = state.uri.queryParameters['error'];
-          return AdminExportFailurePage(title: title, errorMessage: error);
+          final analysisId = state.uri.queryParameters['analyseId'];
+          final retryPath = analysisId == null
+              ? null
+              : AppRoutes.newReport(
+                  analysisId: analysisId,
+                  title: title,
+                  description: state.uri.queryParameters['description'] ?? '',
+                  format: state.uri.queryParameters['format'],
+                );
+          return AdminExportFailurePage(
+            title: title,
+            errorMessage: error,
+            retryPath: retryPath,
+          );
         },
       ),
     ],

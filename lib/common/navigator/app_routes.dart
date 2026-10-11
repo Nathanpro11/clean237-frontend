@@ -18,6 +18,7 @@ abstract final class AppRoutes {
   static const alertIdSegment = ':alertId';
   static const reportIdSegment = ':reportId';
   static const generateReportSegment = 'generate';
+  static const newReportSegment = 'new';
 
   static String zoneDetails(String zoneId) =>
       '$zones/${Uri.encodeComponent(zoneId)}';
@@ -33,9 +34,19 @@ abstract final class AppRoutes {
   static String analysisResult(String analysisId) =>
       '$analyses/${Uri.encodeComponent(analysisId)}';
 
-  static String newReport({required String analysisId}) => Uri(
+  static String newReport({
+    required String analysisId,
+    String? title,
+    String? description,
+    String? format,
+  }) => Uri(
     path: newReportPath,
-    queryParameters: {'analyseId': analysisId},
+    queryParameters: {
+      'analyseId': analysisId,
+      'title': ?title,
+      'description': ?description,
+      'format': ?format,
+    },
   ).toString();
 
   static String alertDetails(String alertId) =>
@@ -56,8 +67,20 @@ abstract final class AppRoutes {
     queryParameters: {'title': title, 'file': ?file},
   ).toString();
 
-  static String exportFailure({required String title, String? error}) => Uri(
+  static String exportFailure({
+    required String title,
+    String? error,
+    String? analysisId,
+    String? description,
+    String? format,
+  }) => Uri(
     path: exportFailurePath,
-    queryParameters: {'title': title, 'error': ?error},
+    queryParameters: {
+      'title': title,
+      'error': ?error,
+      'analyseId': ?analysisId,
+      'description': ?description,
+      'format': ?format,
+    },
   ).toString();
 }
