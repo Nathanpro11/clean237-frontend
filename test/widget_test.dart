@@ -196,7 +196,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    for (final width in [320.0, 390.0, 600.0, 1024.0]) {
+    for (final width in [320.0, 360.0, 390.0, 600.0, 1024.0]) {
       tester.view.physicalSize = Size(width, 900);
       tester.view.devicePixelRatio = 1;
 
