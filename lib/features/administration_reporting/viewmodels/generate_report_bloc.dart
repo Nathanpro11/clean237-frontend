@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../data/repositories/admin_repository.dart';
+import '../../../utils/constances/report_constants.dart';
+import '../../../utils/validators/report_validators.dart';
 import '../models/report_model.dart';
 import '../models/zone_model.dart';
 import 'generate_report_event.dart';
@@ -39,12 +41,7 @@ class GenerateReportBloc
   final AdminRepository _repository;
   late final StreamSubscription<void> _subscription;
 
-  static const predefinedPeriods = [
-    'Septembre 2026',
-    'Août 2026',
-    '3e Trimestre 2026',
-    'Année 2026',
-  ];
+  static const predefinedPeriods = ReportConstants.predefinedPeriods;
 
   String get title => state.title;
   String? get titleError => state.titleError;
@@ -223,9 +220,7 @@ class GenerateReportBloc
       notes: event.notes,
       submissionStatus: SubmissionStatus.idle,
       clearError: true,
-      notesError: overLimit
-          ? 'Les observations ne doivent pas dépasser 300 caractères (${event.notes.length}/300)'
-          : null,
+      notesError: validateReportNotes(event.notes),
       clearNotesError: !overLimit,
     );
     emit(next);
@@ -296,48 +291,27 @@ class GenerateReportBloc
       _validateNotes(_validateDates(_validateZones(_validateTitle(value))));
 
   GenerateReportState _validateTitle(GenerateReportState value) {
-    final title = value.title.trim();
-    final error = title.isEmpty
-        ? 'Le titre du rapport est obligatoire.'
-        : title.length < 4
-        ? 'Le titre doit comporter au moins 4 caractères.'
-        : title.length > 80
-        ? 'Le titre ne doit pas dépasser 80 caractères.'
-        : null;
+    final error = validateReportTitle(value.title);
     return value.copyWith(titleError: error, clearTitleError: error == null);
   }
 
   GenerateReportState _validateZones(GenerateReportState value) =>
       value.copyWith(
-        zonesError: value.selectedZoneIds.isEmpty
-            ? 'Veuillez sélectionner au moins une zone d’analyse.'
-            : null,
+        zonesError: validateReportZones(value.selectedZoneIds),
         clearZonesError: value.selectedZoneIds.isNotEmpty,
       );
 
   GenerateReportState _validateDates(GenerateReportState value) {
-    String? error;
-    if (value.isCustomPeriod) {
-      if (value.customStartDate == null || value.customEndDate == null) {
-        error = 'Veuillez renseigner la date de début et la date de fin.';
-      } else if (value.customStartDate!.isAfter(value.customEndDate!)) {
-        error = 'La date de début doit être antérieure à la date de fin.';
-      } else {
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final end = value.customEndDate!;
-        if (DateTime(end.year, end.month, end.day).isAfter(today)) {
-          error = 'La date de fin ne peut pas être située dans le futur.';
-        }
-      }
-    }
+    final error = validateReportDates(
+      isCustomPeriod: value.isCustomPeriod,
+      startDate: value.customStartDate,
+      endDate: value.customEndDate,
+    );
     return value.copyWith(dateError: error, clearDateError: error == null);
   }
 
   GenerateReportState _validateNotes(GenerateReportState value) {
-    final error = value.notes.length > 300
-        ? 'Les observations ne doivent pas dépasser 300 caractères (${value.notes.length}/300)'
-        : null;
+    final error = validateReportNotes(value.notes);
     return value.copyWith(notesError: error, clearNotesError: error == null);
   }
 

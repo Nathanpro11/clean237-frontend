@@ -9,6 +9,7 @@ import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
 import '../../../common/widgets/primary_button.dart';
 import '../../../common/widgets/responsive_container.dart';
+import '../../../utils/constances/report_constants.dart';
 import '../viewmodels/generate_report_bloc.dart';
 import '../viewmodels/generate_report_event.dart';
 import '../viewmodels/generate_report_state.dart';
@@ -459,10 +460,11 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                                     ),
                                   ),
                                   Text(
-                                    '${viewModel.notes.length}/300',
+                                    '${viewModel.notes.length}/${ReportConstants.notesMaxLength}',
                                     style: AppTextStyles.bodySecondary.copyWith(
                                       fontSize: 12,
-                                      color: viewModel.notes.length > 300
+                                      color: viewModel.notes.length >
+                                              ReportConstants.notesMaxLength
                                           ? AppColors.criticalRed
                                           : AppColors.textSecondary,
                                     ),
