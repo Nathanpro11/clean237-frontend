@@ -53,9 +53,7 @@ class AdminReportPreviewPage extends StatelessWidget {
                   ),
                 );
               } else if (state.status == ExportStatus.failure) {
-                context.push(
-                  AppRoutes.exportFailure(title: report.title),
-                );
+                context.push(AppRoutes.exportFailure(title: report.title));
               }
             },
             child: AdminScaffold(
@@ -144,6 +142,18 @@ class AdminReportPreviewPage extends StatelessWidget {
                             ),
 
                             const SizedBox(height: 20),
+                            SecondaryButton(
+                              label: 'Voir l’analyse associée',
+                              icon: const Icon(
+                                Icons.analytics_outlined,
+                                size: 18,
+                                color: AppColors.textPrimary,
+                              ),
+                              onPressed: () => context.push(
+                                AppRoutes.analysisResult(report.analysisId),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
 
                             // Zones incluses
                             Text(
@@ -179,9 +189,11 @@ class AdminReportPreviewPage extends StatelessWidget {
                                       width: 1,
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  child: Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    runSpacing: 8,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
                                     children: [
                                       Text(
                                         zoneName,
@@ -190,7 +202,10 @@ class AdminReportPreviewPage extends StatelessWidget {
                                         ),
                                       ),
                                       if (zone != null)
-                                        Row(
+                                        Wrap(
+                                          spacing: 8,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
                                           children: [
                                             Text(
                                               '${zone.score}/100',
@@ -202,14 +217,12 @@ class AdminReportPreviewPage extends StatelessWidget {
                                                         : AppColors.normalGreen,
                                                   ),
                                             ),
-                                            const SizedBox(width: 8),
                                             StatusBadge(
                                               label: zone.status.label,
                                               color: zone.score < 50
                                                   ? AppColors.criticalRed
                                                   : AppColors.normalGreen,
                                             ),
-                                            const SizedBox(width: 6),
                                             const Icon(
                                               Icons.arrow_forward_ios_rounded,
                                               size: 12,

@@ -36,173 +36,135 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
       child: AdminScaffold(
         body: BlocBuilder<ZoneDetailsCubit, ZoneDetailsState>(
           builder: (context, state) {
-          final viewModel = context.read<ZoneDetailsCubit>();
-          final zone = state.zone;
-          final alerts = state.alerts;
+            final viewModel = context.read<ZoneDetailsCubit>();
+            final zone = state.zone;
+            final alerts = state.alerts;
 
-          if (zone == null) {
-            return _buildZoneNotFound(context);
-          }
+            if (zone == null) {
+              return _buildZoneNotFound(context);
+            }
 
-          return Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: ResponsiveContainer(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AdminAppHeader(
-                          title: zone.name,
-                          subtitle: 'Clean237 · Administration',
-                          showBackButton: true,
-                          onBack: () {
-                            if (context.canPop()) {
-                              context.pop();
-                            } else {
-                              context.go(AppRoutes.zones);
-                            }
-                          },
-                          ),
-
-                        ZoneSummaryCard(zone: zone),
-                        const SizedBox(height: 16),
-
-                        // Evolution 30 days chart card
-                        EvolutionChartCard(
-                          evolutionPoints: zone.evolutionPoints,
-                          dataPoints: zone.evolution30Days,
-                        ),
-                        const SizedBox(height: 16),
-
-                        if (zone.priorities.isNotEmpty)
-                          PriorityChecklist(
-                            priorities: zone.priorities,
-                            completedPriorities:
-                                state.completedPriorities,
-                            onToggle: viewModel.togglePriority,
-                          ),
-
-                        // ALERTES RÉCENTES section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'ALERTES RÉCENTES DANS LA ZONE',
-                                style: AppTextStyles.sectionLabelGreen,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            StatusBadge.count(
-                              label: '${alerts.length} alertes',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Alerts list
-                        if (alerts.isEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceWhite,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Aucune alerte active pour cette zone.',
-                                style: AppTextStyles.bodySecondary,
-                              ),
-                            ),
-                          )
-                        else
-                          ...alerts.map(
-                            (alert) => AlertCard(
-                              alert: alert,
-                              onTap: () =>
-                                  context.push(AppRoutes.alertDetails(alert.id)),
-                            ),
-                          ),
-
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Bottom action buttons (Responsive)
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                child: ResponsiveContainer(
-                  padding: EdgeInsets.zero,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final createReportButton = SecondaryButton(
-                        label: 'Créer rapport',
-                        icon: const Icon(
-                          Icons.post_add_rounded,
-                          size: 18,
-                          color: AppColors.textPrimary,
-                        ),
-                        onPressed: () {
-                          context.push(
-                            AppRoutes.generateReport(
-                              preselectedZoneId: zone.id,
-                            ),
-                          );
-                        },
-                      );
-                      final analyzeButton = PrimaryButton(
-                        label: 'Générer une Analyse',
-                        icon: const Icon(
-                          Icons.analytics_outlined,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          context.push(AppRoutes.zoneAnalysis(zone.id));
-                        },
-                      );
-
-                      if (constraints.maxWidth < 420) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            createReportButton,
-                            const SizedBox(height: 10),
-                            analyzeButton,
-                          ],
-                        );
-                      }
-
-                      return Row(
+            return Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: ResponsiveContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: createReportButton),
-                          const SizedBox(width: 12),
-                          Expanded(child: analyzeButton),
+                          AdminAppHeader(
+                            title: zone.name,
+                            subtitle: 'Clean237 · Administration',
+                            showBackButton: true,
+                            onBack: () {
+                              if (context.canPop()) {
+                                context.pop();
+                              } else {
+                                context.go(AppRoutes.zones);
+                              }
+                            },
+                          ),
+
+                          ZoneSummaryCard(zone: zone),
+                          const SizedBox(height: 16),
+
+                          // Evolution 30 days chart card
+                          EvolutionChartCard(
+                            evolutionPoints: zone.evolutionPoints,
+                            dataPoints: zone.evolution30Days,
+                          ),
+                          const SizedBox(height: 16),
+
+                          if (zone.priorities.isNotEmpty)
+                            PriorityChecklist(
+                              priorities: zone.priorities,
+                              completedPriorities: state.completedPriorities,
+                              onToggle: viewModel.togglePriority,
+                            ),
+
+                          // ALERTES RÉCENTES section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'ALERTES RÉCENTES DANS LA ZONE',
+                                  style: AppTextStyles.sectionLabelGreen,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              StatusBadge.count(
+                                label: '${alerts.length} alertes',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Alerts list
+                          if (alerts.isEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceWhite,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Aucune alerte active pour cette zone.',
+                                  style: AppTextStyles.bodySecondary,
+                                ),
+                              ),
+                            )
+                          else
+                            ...alerts.map(
+                              (alert) => AlertCard(
+                                alert: alert,
+                                onTap: () => context.push(
+                                  AppRoutes.alertDetails(alert.id),
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 24),
                         ],
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
+
+                // Le rapport ne peut être créé qu’après une analyse.
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  child: ResponsiveContainer(
+                    padding: EdgeInsets.zero,
+                    child: PrimaryButton(
+                      label: 'Générer une Analyse',
+                      icon: const Icon(
+                        Icons.analytics_outlined,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        context.push(AppRoutes.newAnalysis(zoneId: zone.id));
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

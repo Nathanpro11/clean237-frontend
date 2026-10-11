@@ -47,10 +47,7 @@ class AdminGenerateReportPage extends StatelessWidget {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == ReportFormStatus.invalidAnalysis) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'Analyse requise.')),
-          );
-          context.go(AppRoutes.newAnalysis());
+          context.go(AppRoutes.newAnalysis(message: state.errorMessage));
         } else if (state.status == ReportFormStatus.success) {
           context.push(
             AppRoutes.exportSuccess(
@@ -105,8 +102,7 @@ class AdminGenerateReportPage extends StatelessWidget {
                           AdminAppHeader(
                             title: 'Nouveau rapport',
                             subtitle: 'Clean237 · Administration',
-                            description:
-                                'Le rapport sera créé à partir de cette analyse.',
+                            description: 'Le rapport sera créé à partir de cette analyse.',
                             showBackButton: true,
                             onBack: () {
                               if (context.canPop()) {

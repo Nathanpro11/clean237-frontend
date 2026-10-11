@@ -30,6 +30,7 @@ abstract final class AppRouter {
         path: AppRoutes.newAnalysisPath,
         builder: (context, state) => AdminNewAnalysisPage(
           preselectedZoneId: state.uri.queryParameters['zoneId'],
+          initialMessage: state.uri.queryParameters['message'],
         ),
       ),
       GoRoute(

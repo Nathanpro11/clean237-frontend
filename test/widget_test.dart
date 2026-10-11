@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:clean237_frontend/main.dart';
+import 'package:clean237_frontend/common/navigator/app_router.dart';
+import 'package:clean237_frontend/common/navigator/app_routes.dart';
 import 'package:clean237_frontend/common/widgets/filter_chip_group.dart';
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_generate_report_page.dart';
+import 'package:clean237_frontend/features/administration_reporting/screen/admin_report_preview_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_details_page.dart';
-import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_analysis_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/models/report_model.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_analysis_result_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_new_analysis_page.dart';
@@ -130,6 +132,52 @@ void main() {
     await tester.tap(find.text('Générer le rapport'));
     await tester.pumpAndSettle();
     expect(find.text('Rapport exporté avec succès'), findsOneWidget);
+  });
+
+  testWidgets('Report routes enforce and preserve the analysis step', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(const Clean237App());
+    AppRouter.router.go(AppRoutes.newReportPath);
+    await tester.pumpAndSettle();
+    expect(find.text('Nouvelle analyse'), findsOneWidget);
+    expect(
+      find.text('Une analyse est nécessaire pour créer un rapport.'),
+      findsOneWidget,
+    );
+
+    AppRouter.router.go(
+      '${AppRoutes.zoneDetails('mfoundi-centre')}/${AppRoutes.zoneAnalysisSegment}',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nouvelle analyse'), findsOneWidget);
+
+    AppRouter.router.go(
+      '${AppRoutes.generateReportPath}?zoneId=mfoundi-centre',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nouvelle analyse'), findsOneWidget);
+
+    AppRouter.router.go(AppRoutes.reports);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nouveau rapport'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nouvelle analyse'), findsOneWidget);
+
+    AppRouter.router.go(AppRoutes.reportPreview('report_1'));
+    await tester.pumpAndSettle();
+    final linkedAnalysis = find.text('Voir l’analyse associée');
+    await tester.ensureVisible(linkedAnalysis);
+    await tester.tap(linkedAnalysis);
+    await tester.pumpAndSettle();
+    expect(find.text('Résultat de l’analyse'), findsOneWidget);
   });
 
   test('ExportCubit handles export flow', () async {
@@ -370,6 +418,22 @@ void main() {
           create: (_) => AdminRepository(),
           dispose: (repository) => repository.dispose(),
           child: MaterialApp(
+            home: AdminReportPreviewPage(
+              key: ValueKey('report-preview-$width'),
+              reportId: 'report_1',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final previewException = tester.takeException();
+      expect(previewException, isNull, reason: 'Report preview at $width px');
+
+      await tester.pumpWidget(
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
             home: AdminZoneDetailsPage(
               key: ValueKey('zone-$width'),
               zoneId: 'mfoundi-centre',
@@ -382,22 +446,6 @@ void main() {
         tester.takeException(),
         isNull,
         reason: 'Zone details at $width px',
-      );
-
-      await tester.pumpWidget(
-        RepositoryProvider<AdminRepository>(
-          create: (_) => AdminRepository(),
-          dispose: (repository) => repository.dispose(),
-          child: MaterialApp(
-            home: AdminZoneAnalysisPage(zoneId: 'mfoundi-centre'),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(
-        tester.takeException(),
-        isNull,
-        reason: 'Zone analysis at $width px',
       );
     }
   });

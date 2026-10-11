@@ -23,12 +23,9 @@ abstract final class AppRoutes {
   static String zoneDetails(String zoneId) =>
       '$zones/${Uri.encodeComponent(zoneId)}';
 
-  static String zoneAnalysis(String zoneId) =>
-      '${zoneDetails(zoneId)}/$zoneAnalysisSegment';
-
-  static String newAnalysis({String? zoneId}) => Uri(
+  static String newAnalysis({String? zoneId, String? message}) => Uri(
     path: newAnalysisPath,
-    queryParameters: {'zoneId': ?zoneId},
+    queryParameters: {'zoneId': ?zoneId, 'message': ?message},
   ).toString();
 
   static String analysisResult(String analysisId) =>
@@ -54,13 +51,6 @@ abstract final class AppRoutes {
 
   static String reportPreview(String reportId) =>
       '$reports/${Uri.encodeComponent(reportId)}';
-
-  static String generateReport({String? preselectedZoneId}) {
-    return Uri(
-      path: generateReportPath,
-      queryParameters: {'preselectedZoneId': ?preselectedZoneId},
-    ).toString();
-  }
 
   static String exportSuccess({required String title, String? file}) => Uri(
     path: exportSuccessPath,

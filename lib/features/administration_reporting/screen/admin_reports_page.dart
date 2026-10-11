@@ -205,7 +205,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () {
-            context.push(AppRoutes.generateReport());
+            context.push(AppRoutes.newAnalysis());
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

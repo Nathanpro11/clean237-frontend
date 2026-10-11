@@ -75,7 +75,7 @@ class AdminExportFailurePage extends StatelessWidget {
                   } else if (context.canPop()) {
                     context.pop();
                   } else {
-                    context.go(AppRoutes.generateReport());
+                    context.go(AppRoutes.newAnalysis());
                   }
                 },
               ),

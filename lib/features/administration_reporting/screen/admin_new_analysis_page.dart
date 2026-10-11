@@ -15,9 +15,14 @@ import 'widgets/analysis_report_progress.dart';
 import 'widgets/analysis_scope_form.dart';
 
 class AdminNewAnalysisPage extends StatelessWidget {
-  const AdminNewAnalysisPage({super.key, this.preselectedZoneId});
+  const AdminNewAnalysisPage({
+    super.key,
+    this.preselectedZoneId,
+    this.initialMessage,
+  });
 
   final String? preselectedZoneId;
+  final String? initialMessage;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -53,6 +58,15 @@ class AdminNewAnalysisPage extends StatelessWidget {
                           },
                         ),
                         const AnalysisReportProgress(reportStep: false),
+                        if (initialMessage != null) ...[
+                          Text(
+                            initialMessage!,
+                            style: const TextStyle(
+                              color: AppColors.criticalRed,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         if (state.errorMessage != null) ...[
                           Text(
                             state.errorMessage!,
