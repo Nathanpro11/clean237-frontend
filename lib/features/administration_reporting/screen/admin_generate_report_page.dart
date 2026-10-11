@@ -25,8 +25,6 @@ class AdminGenerateReportPage extends StatefulWidget {
 }
 
 class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
-  final _formKey = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -80,12 +78,7 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: ResponsiveContainer(
-                        child: Form(
-                          key: _formKey,
-                          autovalidateMode: viewModel.hasSubmittedOnce
-                              ? AutovalidateMode.onUserInteraction
-                              : AutovalidateMode.disabled,
-                          child: Column(
+                        child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               AdminAppHeader(
@@ -113,7 +106,6 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                               TextFormField(
                                 initialValue: viewModel.title,
                                 onChanged: viewModel.setTitle,
-                                validator: (_) => viewModel.titleError,
                                 style: AppTextStyles.body.copyWith(
                                   color: AppColors.textPrimary,
                                   fontSize: 14,
@@ -475,7 +467,6 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                               TextFormField(
                                 initialValue: viewModel.notes,
                                 maxLines: 3,
-                                maxLength: 300,
                                 onChanged: viewModel.setNotes,
                                 buildCounter: (
                                   context, {
@@ -517,7 +508,6 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                               const SizedBox(height: 24),
                             ],
                           ),
-                        ),
                       ),
                     ),
                   ),

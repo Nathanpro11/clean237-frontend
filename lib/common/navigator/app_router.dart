@@ -41,15 +41,26 @@ abstract final class AppRouter {
           GoRoute(
             path: ':zoneId',
             builder: (context, state) {
-              final zoneId = state.pathParameters['zoneId'] ?? 'mfoundi-centre';
+              final zoneId = state.pathParameters['zoneId'];
+              if (zoneId == null || zoneId.isEmpty) {
+                return const AdminExportFailurePage(
+                  title: 'Zone introuvable',
+                  errorMessage: 'Aucun identifiant de zone n’a été fourni.',
+                );
+              }
               return AdminZoneDetailsPage(zoneId: zoneId);
             },
             routes: [
               GoRoute(
                 path: 'analysis',
                 builder: (context, state) {
-                  final zoneId =
-                      state.pathParameters['zoneId'] ?? 'mfoundi-centre';
+                  final zoneId = state.pathParameters['zoneId'];
+                  if (zoneId == null || zoneId.isEmpty) {
+                    return const AdminExportFailurePage(
+                      title: 'Zone introuvable',
+                      errorMessage: 'Aucun identifiant de zone n’a été fourni.',
+                    );
+                  }
                   return AdminZoneAnalysisPage(zoneId: zoneId);
                 },
               ),
