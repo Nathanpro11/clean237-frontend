@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/styles/app_colors.dart';
 import '../../../../common/styles/app_text_styles.dart';
-import '../../viewmodels/generate_report_event.dart';
+import '../../models/report_model.dart';
 
 class FormatSelector extends StatelessWidget {
   const FormatSelector({
@@ -11,17 +11,20 @@ class FormatSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  final ExportDocumentFormat selectedFormat;
-  final ValueChanged<ExportDocumentFormat> onChanged;
+  final ReportFormat selectedFormat;
+  final ValueChanged<ReportFormat> onChanged;
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Format d’export', style: AppTextStyles.cardTitle.copyWith(fontSize: 15)),
+      Text(
+        'Format d’export',
+        style: AppTextStyles.cardTitle.copyWith(fontSize: 15),
+      ),
       const SizedBox(height: 10),
       Row(
-        children: ExportDocumentFormat.values.map((format) {
+        children: ReportFormat.values.map((format) {
           final isSelected = selectedFormat == format;
           return Expanded(
             child: GestureDetector(
@@ -44,7 +47,7 @@ class FormatSelector extends StatelessWidget {
                 child: Column(
                   children: [
                     Icon(
-                      format == ExportDocumentFormat.pdf
+                      format == ReportFormat.pdf
                           ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       color: isSelected

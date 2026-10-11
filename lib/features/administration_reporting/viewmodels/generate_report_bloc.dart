@@ -52,7 +52,7 @@ class GenerateReportBloc
   String? get dateError => state.dateError;
   Set<String> get selectedZoneIds => state.selectedZoneIds;
   String? get zonesError => state.zonesError;
-  ExportDocumentFormat get selectedFormat => state.selectedFormat;
+  ReportFormat get selectedFormat => state.selectedFormat;
   String get notes => state.notes;
   String? get notesError => state.notesError;
   bool get isExporting => state.submissionStatus == SubmissionStatus.submitting;
@@ -80,7 +80,7 @@ class GenerateReportBloc
   void toggleZone(String id) => add(ZoneToggled(id));
   void selectAllZones() => add(const AllZonesSelected());
   void clearZoneSelection() => add(const ZonesCleared());
-  void setFormat(ExportDocumentFormat value) => add(FormatChanged(value));
+  void setFormat(ReportFormat value) => add(FormatChanged(value));
   void setNotes(String value) => add(NotesChanged(value));
 
   static GenerateReportState _initialState(
@@ -257,32 +257,32 @@ class GenerateReportBloc
       return;
     }
 
-    final selectedZones = state.availableZones
-        .where((zone) => state.selectedZoneIds.contains(zone.id))
-        .toList();
-    final report = AdminReport(
-      id: 'report_${DateTime.now().millisecondsSinceEpoch}',
-      title: state.title.trim(),
-      type: ReportType.synthesis,
-      status: ReportStatus.ready,
-      date: 'Aujourd’hui',
-      zoneCount: selectedZones.length,
-      zoneNames: selectedZones.map((zone) => zone.name).toList(),
-      summary: state.notes.trim().isNotEmpty
-          ? state.notes.trim()
-          : 'Rapport généré pour la période ${state.isCustomPeriod ? "personnalisée" : state.selectedPeriod}.',
+    final periodEnd = state.isCustomPeriod
+        ? state.customEndDate!
+        : DateTime.now();
+    final periodStart = state.isCustomPeriod
+        ? state.customStartDate!
+        : periodEnd.subtract(const Duration(days: 30));
+    final analysis = _repository.generateAnalysis(
+      periodStart: periodStart,
+      periodEnd: periodEnd,
+      zoneIds: state.selectedZoneIds.toList(),
     );
-    _repository.addReport(report);
+    final report = _repository.generateReport(
+      analysisId: analysis.id,
+      title: state.title.trim(),
+      description: state.notes.trim(),
+      format: state.selectedFormat,
+    );
     final extension = switch (state.selectedFormat) {
-      ExportDocumentFormat.pdf => 'pdf',
-      ExportDocumentFormat.excel => 'xlsx',
-      ExportDocumentFormat.csv => 'csv',
+      ReportFormat.pdf => 'pdf',
+      ReportFormat.excel => 'xlsx',
+      ReportFormat.csv => 'csv',
     };
     emit(
       state.copyWith(
         submissionStatus: SubmissionStatus.success,
-        generatedFilePath:
-            'clean237_rapport_${DateTime.now().millisecondsSinceEpoch}.$extension',
+        generatedFilePath: '${report.id}.$extension',
       ),
     );
   }

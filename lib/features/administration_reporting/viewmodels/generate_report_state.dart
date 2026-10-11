@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../models/zone_model.dart';
-import 'generate_report_event.dart';
+import '../models/report_model.dart';
 
 enum SubmissionStatus { idle, submitting, success, failure }
 
@@ -14,7 +14,7 @@ class GenerateReportState extends Equatable {
     this.customEndDate,
     this.selectedZoneIds = const {},
     this.availableZones = const [],
-    this.selectedFormat = ExportDocumentFormat.pdf,
+    this.selectedFormat = ReportFormat.pdf,
     this.notes = '',
     this.titleError,
     this.zonesError,
@@ -33,7 +33,7 @@ class GenerateReportState extends Equatable {
   final DateTime? customEndDate;
   final Set<String> selectedZoneIds;
   final List<Zone> availableZones;
-  final ExportDocumentFormat selectedFormat;
+  final ReportFormat selectedFormat;
   final String notes;
   final String? titleError;
   final String? zonesError;
@@ -52,7 +52,7 @@ class GenerateReportState extends Equatable {
     DateTime? customEndDate,
     Set<String>? selectedZoneIds,
     List<Zone>? availableZones,
-    ExportDocumentFormat? selectedFormat,
+    ReportFormat? selectedFormat,
     String? notes,
     String? titleError,
     String? zonesError,

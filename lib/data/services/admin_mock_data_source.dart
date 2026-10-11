@@ -1,4 +1,5 @@
 import '../../features/administration_reporting/models/alert_model.dart';
+import '../../features/administration_reporting/models/analysis_model.dart';
 import '../../features/administration_reporting/models/report_model.dart';
 import '../../features/administration_reporting/models/zone_model.dart';
 
@@ -203,63 +204,161 @@ class AdminMockDataSource {
     ),
   ];
 
-  final List<AdminReport> reports = [
-    const AdminReport(
+  late final List<Analysis> analyses = [
+    _demoAnalysis(
+      id: 'analysis_demo_default',
+      type: 'Synthèse mensuelle',
+      zoneIds: [
+        'mfoundi-centre',
+        'biyem-assi',
+        'bastos',
+        'mokolo-marche',
+        'mvog-ada',
+      ],
+      periodStart: DateTime(2026, 9),
+      periodEnd: DateTime(2026, 9, 30),
+      createdAt: DateTime(2026, 9, 22),
+    ),
+    _demoAnalysis(
+      id: 'analysis_demo_report_2',
+      type: 'Suivi hebdomadaire',
+      zoneIds: ['mfoundi-centre', 'mokolo-marche', 'bastos'],
+      periodStart: DateTime(2026, 9, 8),
+      periodEnd: DateTime(2026, 9, 15),
+      createdAt: DateTime(2026, 9, 15),
+    ),
+    _demoAnalysis(
+      id: 'analysis_demo_report_3',
+      type: 'Bilan mensuel',
+      zoneIds: [
+        'mfoundi-centre',
+        'biyem-assi',
+        'bastos',
+        'mokolo-marche',
+        'ngoa-ekelle',
+        'omnisports',
+        'melen',
+        'essos',
+      ],
+      periodStart: DateTime(2026, 8),
+      periodEnd: DateTime(2026, 8, 31),
+      createdAt: DateTime(2026, 8, 31),
+    ),
+    _demoAnalysis(
+      id: 'analysis_demo_report_4',
+      type: 'Synthèse trimestrielle',
+      zoneIds: zones.map((zone) => zone.id).toList(growable: false),
+      periodStart: DateTime(2026, 7),
+      periodEnd: DateTime(2026, 9, 30),
+      createdAt: DateTime(2026, 9, 28),
+    ),
+  ];
+
+  late final List<AdminReport> reports = [
+    _demoReport(
       id: 'report_1',
+      analysisId: 'analysis_demo_default',
       title: 'Rapport municipal · Septembre',
       type: ReportType.synthesis,
       status: ReportStatus.ready,
       date: '22 sept. 2026',
-      zoneCount: 5,
-      zoneNames: [
-        'Mfoundi Centre',
-        'Biyem-Assi',
-        'Bastos',
-        'Mokolo Marché',
-        'Mvog-Ada',
-      ],
-      summary: 'Bilan de performance et indicateurs d’assainissement pour le mois de septembre.',
+      summary:
+          'Bilan de performance et indicateurs d’assainissement pour le mois de septembre.',
     ),
-    const AdminReport(
+    _demoReport(
       id: 'report_2',
+      analysisId: 'analysis_demo_report_2',
       title: 'Suivi hebdomadaire Mfoundi',
       type: ReportType.tracking,
       status: ReportStatus.inProgress,
       date: '15 sept. 2026',
-      zoneCount: 3,
-      zoneNames: ['Mfoundi Centre', 'Mokolo Marché', 'Bastos'],
       summary:
           'Audit des points de friction et cadencement des camions bennes.',
     ),
-    const AdminReport(
+    _demoReport(
       id: 'report_3',
+      analysisId: 'analysis_demo_report_3',
       title: 'Bilan collecte · Août',
       type: ReportType.export,
       status: ReportStatus.archived,
       date: '31 août 2026',
-      zoneCount: 8,
-      zoneNames: [
-        'Mfoundi Centre',
-        'Biyem-Assi',
-        'Bastos',
-        'Mokolo Marché',
-        'Ngoa-Ekellé',
-        'Omnisports',
-        'Melen',
-        'Essos',
-      ],
-      summary: 'Archive définitive des volumes collectés au mois d’août 2026.',
+      summary:
+          'Archive définitive des volumes collectés au mois d’août 2026.',
     ),
-    const AdminReport(
+    _demoReport(
       id: 'report_4',
+      analysisId: 'analysis_demo_report_4',
       title: 'Synthèse propreté urbaine T3',
       type: ReportType.synthesis,
       status: ReportStatus.ready,
       date: '28 sept. 2026',
-      zoneCount: 12,
-      zoneNames: ['Ensemble des 12 zones'],
       summary: 'Synthèse consolidée du 3e trimestre 2026.',
     ),
   ];
+
+  Analysis _demoAnalysis({
+    required String id,
+    required String type,
+    required List<String> zoneIds,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    required DateTime createdAt,
+  }) {
+    final selectedZones = zones
+        .where((zone) => zoneIds.contains(zone.id))
+        .toList(growable: false);
+    final scores = selectedZones.map((zone) => zone.score).toList();
+    final sum = scores.fold<int>(0, (total, score) => total + score);
+    final average = scores.isEmpty ? 0.0 : sum / scores.length;
+    final indicators = AnalysisIndicators(
+      totalPoints: scores.length,
+      average: average,
+      minimum: scores.isEmpty ? 0 : scores.reduce((a, b) => a < b ? a : b),
+      maximum: scores.isEmpty ? 0 : scores.reduce((a, b) => a > b ? a : b),
+      sum: sum,
+      unit: 'pts',
+    );
+    return Analysis(
+      id: id,
+      type: type,
+      periodStart: periodStart,
+      periodEnd: periodEnd,
+      zoneIds: List.unmodifiable(selectedZones.map((zone) => zone.id)),
+      result:
+          'Le score moyen des ${selectedZones.length} zones analysées est de '
+          '${average.toStringAsFixed(1)} pts.',
+      indicators: indicators,
+      createdAt: createdAt,
+    );
+  }
+
+  AdminReport _demoReport({
+    required String id,
+    required String analysisId,
+    required String title,
+    required ReportType type,
+    required ReportStatus status,
+    required String date,
+    required String summary,
+  }) {
+    final analysis = analyses.firstWhere((item) => item.id == analysisId);
+    final selectedZones = zones
+        .where((zone) => analysis.zoneIds.contains(zone.id))
+        .toList(growable: false);
+    return AdminReport(
+      id: id,
+      analysisId: analysisId,
+      title: title,
+      type: type,
+      status: status,
+      date: date,
+      zoneCount: analysis.indicators.totalPoints,
+      zoneNames: List.unmodifiable(selectedZones.map((zone) => zone.name)),
+      summary: summary,
+      description: summary,
+      createdAt: analysis.createdAt,
+      indicators: analysis.indicators,
+    );
+  }
 
 }

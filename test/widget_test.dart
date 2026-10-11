@@ -7,6 +7,7 @@ import 'package:clean237_frontend/data/repositories/admin_repository.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_generate_report_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_details_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_analysis_page.dart';
+import 'package:clean237_frontend/features/administration_reporting/models/report_model.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_cubit.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_state.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_bloc.dart';
@@ -187,6 +188,50 @@ void main() {
     expect(repo.allAlerts.length, 7);
     repo.dispose();
   });
+
+  test(
+    'Analysis metrics are derived from selected zones and required for reports',
+    () {
+      final repository = AdminRepository();
+      final start = DateTime(2026, 10, 1);
+      final end = DateTime(2026, 10, 7);
+      try {
+        final analysis = repository.generateAnalysis(
+          periodStart: start,
+          periodEnd: end,
+          zoneIds: ['mfoundi-centre', 'biyem-assi'],
+        );
+        expect(analysis.indicators.totalPoints, 2);
+        expect(analysis.indicators.sum, 103);
+        expect(analysis.indicators.average, 51.5);
+        expect(analysis.indicators.minimum, 42);
+        expect(analysis.indicators.maximum, 61);
+        expect(analysis.indicators.unit, 'pts');
+
+        expect(
+          () => repository.generateReport(
+            analysisId: 'unknown',
+            title: 'Rapport test',
+            description: '',
+            format: ReportFormat.pdf,
+          ),
+          throwsA(isA<AdminRepositoryException>()),
+        );
+
+        final report = repository.generateReport(
+          analysisId: analysis.id,
+          title: 'Rapport test',
+          description: 'Résumé',
+          format: ReportFormat.csv,
+        );
+        expect(report.analysisId, analysis.id);
+        expect(report.format, ReportFormat.csv);
+        expect(report.indicators, analysis.indicators);
+      } finally {
+        repository.dispose();
+      }
+    },
+  );
 
   testWidgets('Admin report and zone detail fit common viewport widths', (
     WidgetTester tester,

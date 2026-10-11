@@ -1,14 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum ExportDocumentFormat {
-  pdf('PDF (.pdf)', 'Format document officiel'),
-  excel('Excel (.xlsx)', 'Données brutes et feuilles de calcul'),
-  csv('CSV (.csv)', 'Export léger compatible SIG');
-
-  const ExportDocumentFormat(this.label, this.description);
-  final String label;
-  final String description;
-}
+import '../models/report_model.dart';
 
 abstract class GenerateReportEvent extends Equatable {
   const GenerateReportEvent();
@@ -62,7 +54,7 @@ class ZonesCleared extends GenerateReportEvent {
 
 class FormatChanged extends GenerateReportEvent {
   const FormatChanged(this.format);
-  final ExportDocumentFormat format;
+  final ReportFormat format;
   @override
   List<Object?> get props => [format];
 }
