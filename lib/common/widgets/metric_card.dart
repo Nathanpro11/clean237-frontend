@@ -4,7 +4,7 @@ import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 
 class MetricCard extends StatelessWidget {
-  final int count;
+  final num count;
   final String title;
   final String subtitle;
   final Color countColor;

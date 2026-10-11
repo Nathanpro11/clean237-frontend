@@ -8,8 +8,13 @@ import 'package:clean237_frontend/features/administration_reporting/screen/admin
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_details_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/screen/admin_zone_analysis_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/models/report_model.dart';
+import 'package:clean237_frontend/features/administration_reporting/screen/admin_analysis_result_page.dart';
+import 'package:clean237_frontend/features/administration_reporting/screen/admin_new_analysis_page.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_cubit.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/export_state.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/analysis_form_cubit.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/analysis_result_cubit.dart';
+import 'package:clean237_frontend/features/administration_reporting/viewmodels/analysis_result_state.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_bloc.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_event.dart';
 import 'package:clean237_frontend/features/administration_reporting/viewmodels/generate_report_state.dart';
@@ -217,7 +222,6 @@ void main() {
           ),
           throwsA(isA<AdminRepositoryException>()),
         );
-
         final report = repository.generateReport(
           analysisId: analysis.id,
           title: 'Rapport test',
@@ -228,6 +232,37 @@ void main() {
         expect(report.format, ReportFormat.csv);
         expect(report.indicators, analysis.indicators);
       } finally {
+        repository.dispose();
+      }
+    },
+  );
+
+  test(
+    'Analysis form validates and result resolves the created analysis',
+    () async {
+      final repository = AdminRepository();
+      final form = AnalysisFormCubit(
+        repository,
+        preselectedZoneId: 'mfoundi-centre',
+      );
+      try {
+        expect(form.state.selectedZoneIds, {'mfoundi-centre'});
+        final analysis = await form.generateAnalysis();
+        expect(analysis, isNotNull);
+
+        final result = AnalysisResultCubit(repository, analysis!.id);
+        expect(result.state.status, AnalysisResultStatus.success);
+        expect(result.state.analysis?.id, analysis.id);
+        expect(result.state.zones.single.id, 'mfoundi-centre');
+        await result.close();
+
+        final invalidForm = AnalysisFormCubit(repository);
+        final missingZones = await invalidForm.generateAnalysis();
+        expect(missingZones, isNull);
+        expect(invalidForm.state.zonesError, isNotNull);
+        await invalidForm.close();
+      } finally {
+        await form.close();
         repository.dispose();
       }
     },
@@ -244,6 +279,44 @@ void main() {
     for (final width in [320.0, 360.0, 390.0, 600.0, 1024.0]) {
       tester.view.physicalSize = Size(width, 900);
       tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
+            home: AdminNewAnalysisPage(
+              key: ValueKey('analysis-$width'),
+              preselectedZoneId: 'mfoundi-centre',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'New analysis form at $width px',
+      );
+
+      await tester.pumpWidget(
+        RepositoryProvider<AdminRepository>(
+          create: (_) => AdminRepository(),
+          dispose: (repository) => repository.dispose(),
+          child: MaterialApp(
+            home: AdminAnalysisResultPage(
+              key: ValueKey('analysis-result-$width'),
+              analysisId: 'analysis_demo_default',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Analysis result at $width px',
+      );
 
       await tester.pumpWidget(
         RepositoryProvider<AdminRepository>(

@@ -21,6 +21,33 @@ String? validateReportZones(Set<String> zoneIds) {
   return null;
 }
 
+String? validateAnalysisZones(Set<String> zoneIds) {
+  if (zoneIds.isEmpty) {
+    return 'Sélectionnez au moins une zone pour lancer l’analyse.';
+  }
+  return null;
+}
+
+String? validateAnalysisPeriod({
+  required DateTime? startDate,
+  required DateTime? endDate,
+  DateTime? today,
+}) {
+  if (startDate == null || endDate == null) {
+    return 'La période de l’analyse est obligatoire.';
+  }
+  if (startDate.isAfter(endDate)) {
+    return 'La date de début doit précéder ou être égale à la date de fin.';
+  }
+  final now = today ?? DateTime.now();
+  final endOfDay = DateTime(endDate.year, endDate.month, endDate.day);
+  final currentDay = DateTime(now.year, now.month, now.day);
+  if (endOfDay.isAfter(currentDay)) {
+    return 'La date de fin ne peut pas être située dans le futur.';
+  }
+  return null;
+}
+
 String? validateReportDates({
   required bool isCustomPeriod,
   required DateTime? startDate,

@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
 import '../../features/administration_reporting/screen/admin_alerts_page.dart';
 import '../../features/administration_reporting/screen/admin_alert_details_page.dart';
+import '../../features/administration_reporting/screen/admin_analysis_result_page.dart';
 import '../../features/administration_reporting/screen/admin_critical_zones_page.dart';
 import '../../features/administration_reporting/screen/admin_dashboard_page.dart';
 import '../../features/administration_reporting/screen/admin_export_failure_page.dart';
 import '../../features/administration_reporting/screen/admin_export_success_page.dart';
 import '../../features/administration_reporting/screen/admin_generate_report_page.dart';
+import '../../features/administration_reporting/screen/admin_new_analysis_page.dart';
 import '../../features/administration_reporting/screen/admin_report_preview_page.dart';
 import '../../features/administration_reporting/screen/admin_reports_page.dart';
 import '../../features/administration_reporting/screen/admin_zone_analysis_page.dart';
@@ -24,6 +26,25 @@ abstract final class AppRouter {
     ),
     routes: [
       GoRoute(path: '/', redirect: (context, state) => AppRoutes.dashboard),
+      GoRoute(
+        path: AppRoutes.newAnalysisPath,
+        builder: (context, state) => AdminNewAnalysisPage(
+          preselectedZoneId: state.uri.queryParameters['zoneId'],
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.analyses}/${AppRoutes.analysisIdSegment}',
+        builder: (context, state) {
+          final analysisId = state.pathParameters['analyseId'];
+          if (analysisId == null || analysisId.isEmpty) {
+            return const AdminExportFailurePage(
+              title: 'Analyse introuvable',
+              errorMessage: 'Aucun identifiant d’analyse n’a été fourni.',
+            );
+          }
+          return AdminAnalysisResultPage(analysisId: analysisId);
+        },
+      ),
       GoRoute(
         path: AppRoutes.dashboard,
         builder: (context, state) => const AdminDashboardPage(),
