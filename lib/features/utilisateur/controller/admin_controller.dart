@@ -102,6 +102,25 @@ class AdminController extends ChangeNotifier {
     }
   }
 
+  /// Point d'entrée pour le dialogue de création de compte admin : reçoit
+  /// les valeurs BRUTES du formulaire (FormBuilder) et le rôle sélectionné,
+  /// fait tout le nettoyage/mapping ici (nettoyage du téléphone, trim,
+  /// matricule/zone uniquement si agent), pas dans la View.
+  Future<bool> soumettreCreationCompte(Map<String, dynamic> valeursFormulaire, String role) {
+    final telephoneNettoye =
+        (valeursFormulaire['telephone'] as String).replaceAll(RegExp(r'[\s-]'), '');
+
+    return creerUtilisateur(
+      nom: (valeursFormulaire['nom'] as String).trim(),
+      email: (valeursFormulaire['email'] as String).trim().toLowerCase(),
+      telephone: telephoneNettoye,
+      motDepasse: valeursFormulaire['motDepasse'] as String,
+      roleNom: role,
+      matricule: role == 'agent' ? (valeursFormulaire['matricule'] as String?)?.trim() : null,
+      zoneAffectee: role == 'agent' ? (valeursFormulaire['zone'] as String?)?.trim() : null,
+    );
+  }
+
   Future<String> dernierIpAudite(String utilisateurId) {
     return _repository.dernierIpAudite(utilisateurId);
   }

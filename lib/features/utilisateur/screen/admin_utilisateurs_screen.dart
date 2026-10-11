@@ -69,6 +69,10 @@ class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
     );
   }
 
+  // ⚠️ Logique volontairement minimale ici (View) : construction du formulaire
+  // + validation + gestion de l'état d'ouverture du dialogue (purement UI).
+  // Le nettoyage/mapping des valeurs (téléphone, trim, matricule/zone selon
+  // le rôle) vit dans AdminController.soumettreCreationCompte().
   void _ouvrirDialogueCreationCompte(BuildContext context) {
     final formKey = GlobalKey<FormBuilderState>();
     String roleSelectionne = 'citoyen';
@@ -186,17 +190,8 @@ class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
 
                           final valeurs = formKey.currentState!.value;
                           final admin = context.read<AdminController>();
-                          final telephoneNettoye = (valeurs['telephone'] as String).replaceAll(RegExp(r'[\s-]'), '');
 
-                          final succes = await admin.creerUtilisateur(
-                            nom: (valeurs['nom'] as String).trim(),
-                            email: (valeurs['email'] as String).trim().toLowerCase(),
-                            telephone: telephoneNettoye,
-                            motDepasse: valeurs['motDepasse'] as String,
-                            roleNom: roleSelectionne,
-                            matricule: roleSelectionne == 'agent' ? (valeurs['matricule'] as String?)?.trim() : null,
-                            zoneAffectee: roleSelectionne == 'agent' ? (valeurs['zone'] as String?)?.trim() : null,
-                          );
+                          final succes = await admin.soumettreCreationCompte(valeurs, roleSelectionne);
 
                           if (dialogContext.mounted) Navigator.pop(dialogContext);
                           if (context.mounted) {
