@@ -1,0 +1,96 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../common/styles/app_colors.dart';
+import '../../../common/styles/app_text_styles.dart';
+import '../../../common/widgets/admin_scaffold.dart';
+import '../../../common/widgets/primary_button.dart';
+import '../../../common/widgets/responsive_container.dart';
+import '../../../common/widgets/secondary_button.dart';
+
+class AdminExportFailurePage extends StatelessWidget {
+  final String title;
+  final String? errorMessage;
+
+  const AdminExportFailurePage({
+    super.key,
+    required this.title,
+    this.errorMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminScaffold(
+      body: ResponsiveContainer(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: AppColors.criticalRedLight,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: AppColors.criticalRed,
+                  size: 46,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Échec de l’export',
+                style: AppTextStyles.pageTitle.copyWith(fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                errorMessage ??
+                    'Impossible de générer le document pour "$title". Veuillez vérifier vos paramètres ou réessayer ultérieurement.',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Spacer(),
+              PrimaryButton(
+                label: 'Réessayer la génération',
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/admin/reports/generate');
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                label: 'Retourner aux rapports',
+                onPressed: () {
+                  context.go('/admin/reports');
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => context.go('/admin/dashboard'),
+                child: const Text('Aller au tableau de bord'),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

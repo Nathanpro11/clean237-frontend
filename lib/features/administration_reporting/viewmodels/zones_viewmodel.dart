@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
@@ -15,6 +17,7 @@ enum ZoneSortOption {
 /// ViewModel pour la gestion de la liste des zones et des filtres
 class ZonesViewModel extends ChangeNotifier {
   final AdminRepository _repository;
+  late final StreamSubscription<void> _repositorySubscription;
 
   String _searchQuery = '';
   String _selectedFilter = 'Toutes';
@@ -27,19 +30,19 @@ class ZonesViewModel extends ChangeNotifier {
     'Critique',
   ];
 
-  ZonesViewModel({AdminRepository? repository, String? initialFilter})
-    : _repository = repository ?? AdminRepository.instance,
+  ZonesViewModel({
+    required AdminRepository adminRepository,
+    String? initialFilter,
+  }) : _repository = adminRepository,
       _selectedFilter = initialFilter ?? 'Toutes' {
-    _repository.addListener(_onRepositoryChanged);
+    _repositorySubscription = _repository.changes.listen((_) {
+      notifyListeners();
+    });
   }
 
   String get searchQuery => _searchQuery;
   String get selectedFilter => _selectedFilter;
   ZoneSortOption get sortOption => _sortOption;
-
-  void _onRepositoryChanged() {
-    notifyListeners();
-  }
 
   void setSearchQuery(String query) {
     if (_searchQuery != query) {
@@ -129,7 +132,7 @@ class ZonesViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _repository.removeListener(_onRepositoryChanged);
+    unawaited(_repositorySubscription.cancel());
     super.dispose();
   }
 }

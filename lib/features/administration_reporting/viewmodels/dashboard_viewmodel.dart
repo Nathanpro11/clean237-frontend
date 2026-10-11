@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
@@ -7,10 +9,13 @@ import '../models/zone_model.dart';
 /// ViewModel pour la page Tableau de bord (Dashboard)
 class DashboardViewModel extends ChangeNotifier {
   final AdminRepository _repository;
+  late final StreamSubscription<void> _repositorySubscription;
 
-  DashboardViewModel({AdminRepository? repository})
-    : _repository = repository ?? AdminRepository.instance {
-    _repository.addListener(_onRepositoryChanged);
+  DashboardViewModel({required AdminRepository adminRepository})
+    : _repository = adminRepository {
+    _repositorySubscription = _repository.changes.listen((_) {
+      notifyListeners();
+    });
   }
 
   // Données observables
@@ -23,13 +28,9 @@ class DashboardViewModel extends ChangeNotifier {
   List<AdminAlert> get recentAlerts =>
       _repository.activeAlerts.take(3).toList();
 
-  void _onRepositoryChanged() {
-    notifyListeners();
-  }
-
   @override
   void dispose() {
-    _repository.removeListener(_onRepositoryChanged);
+    unawaited(_repositorySubscription.cancel());
     super.dispose();
   }
 }

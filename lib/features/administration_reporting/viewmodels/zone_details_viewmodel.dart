@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
@@ -8,19 +10,20 @@ import '../models/zone_model.dart';
 class ZoneDetailsViewModel extends ChangeNotifier {
   final AdminRepository _repository;
   final String zoneId;
+  late final StreamSubscription<void> _repositorySubscription;
 
   final Set<String> _completedPriorities = {};
 
-  ZoneDetailsViewModel({required this.zoneId, AdminRepository? repository})
-    : _repository = repository ?? AdminRepository.instance {
-    _repository.addListener(_onRepositoryChanged);
+  ZoneDetailsViewModel({
+    required this.zoneId,
+    required AdminRepository adminRepository,
+  }) : _repository = adminRepository {
+    _repositorySubscription = _repository.changes.listen((_) {
+      notifyListeners();
+    });
   }
 
   Set<String> get completedPriorities => Set.unmodifiable(_completedPriorities);
-
-  void _onRepositoryChanged() {
-    notifyListeners();
-  }
 
   Zone? get zone => _repository.getZoneById(zoneId);
 
@@ -40,7 +43,7 @@ class ZoneDetailsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _repository.removeListener(_onRepositoryChanged);
+    unawaited(_repositorySubscription.cancel());
     super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
@@ -7,6 +9,7 @@ import '../models/zone_model.dart';
 /// ViewModel pour la gestion de la liste des rapports
 class ReportsViewModel extends ChangeNotifier {
   final AdminRepository _repository;
+  late final StreamSubscription<void> _repositorySubscription;
 
   String _selectedStatus = 'Tous';
   String _searchQuery = '';
@@ -18,17 +21,15 @@ class ReportsViewModel extends ChangeNotifier {
     'Archivé',
   ];
 
-  ReportsViewModel({AdminRepository? repository})
-    : _repository = repository ?? AdminRepository.instance {
-    _repository.addListener(_onRepositoryChanged);
+  ReportsViewModel({required AdminRepository adminRepository})
+    : _repository = adminRepository {
+    _repositorySubscription = _repository.changes.listen((_) {
+      notifyListeners();
+    });
   }
 
   String get selectedStatus => _selectedStatus;
   String get searchQuery => _searchQuery;
-
-  void _onRepositoryChanged() {
-    notifyListeners();
-  }
 
   void setStatusFilter(String status) {
     if (_selectedStatus != status) {
@@ -91,7 +92,7 @@ class ReportsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _repository.removeListener(_onRepositoryChanged);
+    unawaited(_repositorySubscription.cancel());
     super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:clean237_frontend/data/repositories/admin_repository.dart';
@@ -6,23 +8,22 @@ import '../models/alert_model.dart';
 /// ViewModel pour la gestion des alertes et résolutions
 class AlertsViewModel extends ChangeNotifier {
   final AdminRepository _repository;
+  late final StreamSubscription<void> _repositorySubscription;
 
   String _selectedFilter = 'Toutes';
   String _searchQuery = '';
 
   final List<String> filters = const ['Toutes', 'Critiques', 'À surveiller'];
 
-  AlertsViewModel({AdminRepository? repository})
-    : _repository = repository ?? AdminRepository.instance {
-    _repository.addListener(_onRepositoryChanged);
+  AlertsViewModel({required AdminRepository adminRepository})
+    : _repository = adminRepository {
+    _repositorySubscription = _repository.changes.listen((_) {
+      notifyListeners();
+    });
   }
 
   String get selectedFilter => _selectedFilter;
   String get searchQuery => _searchQuery;
-
-  void _onRepositoryChanged() {
-    notifyListeners();
-  }
 
   void setFilter(String filter) {
     if (_selectedFilter != filter) {
@@ -89,7 +90,7 @@ class AlertsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _repository.removeListener(_onRepositoryChanged);
+    unawaited(_repositorySubscription.cancel());
     super.dispose();
   }
 }

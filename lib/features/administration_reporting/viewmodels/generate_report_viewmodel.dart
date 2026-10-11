@@ -48,9 +48,9 @@ class GenerateReportViewModel extends ChangeNotifier {
   ];
 
   GenerateReportViewModel({
-    AdminRepository? repository,
+    required AdminRepository adminRepository,
     String? preselectedZoneId,
-  }) : _repository = repository ?? AdminRepository.instance {
+  }) : _repository = adminRepository {
     if (preselectedZoneId != null && preselectedZoneId.isNotEmpty) {
       _selectedZoneIds.add(preselectedZoneId);
       final zone = _repository.getZoneById(preselectedZoneId);

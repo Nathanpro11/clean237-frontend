@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 import '../../features/administration_reporting/models/alert_model.dart';
 import '../../features/administration_reporting/models/report_model.dart';
@@ -6,14 +6,19 @@ import '../../features/administration_reporting/models/zone_model.dart';
 import '../services/admin_mock_data_source.dart';
 
 /// Repository en mémoire des données du module d'administration.
-class AdminRepository extends ChangeNotifier {
-  static final AdminRepository instance = AdminRepository._internal();
-  factory AdminRepository() => instance;
-  AdminRepository._internal();
+class AdminRepository {
+  AdminRepository({AdminMockDataSource? dataSource})
+    : _dataSource = dataSource ?? AdminMockDataSource();
 
-  final AdminMockDataSource _dataSource = AdminMockDataSource();
+  final AdminMockDataSource _dataSource;
+  final StreamController<void> _changesController =
+      StreamController<void>.broadcast();
+
+  Stream<void> get changes => _changesController.stream;
 
   // Getters
+  List<Zone> getZones() => allZones;
+
   List<Zone> get allZones => List.unmodifiable(_dataSource.zones);
   List<Zone> get criticalZones =>
       _dataSource.zones.where((z) => z.status == ZoneStatus.critical).toList();
@@ -24,11 +29,15 @@ class AdminRepository extends ChangeNotifier {
       .take(2)
       .toList();
 
+  List<AdminAlert> getAlerts() => allAlerts;
+
   List<AdminAlert> get allAlerts => List.unmodifiable(_dataSource.alerts);
   List<AdminAlert> get activeAlerts =>
       _dataSource.alerts.where((a) => !a.isHandled).toList();
   List<AdminAlert> getAlertsForZone(String zoneId) =>
       _dataSource.alerts.where((a) => a.zoneId == zoneId).toList();
+
+  List<AdminReport> getReports() => allReports;
 
   List<AdminReport> get allReports => List.unmodifiable(_dataSource.reports);
 
@@ -62,12 +71,16 @@ class AdminRepository extends ChangeNotifier {
       _dataSource.alerts[index] = _dataSource.alerts[index].copyWith(
         isHandled: true,
       );
-      notifyListeners();
+      _changesController.add(null);
     }
   }
 
   void addReport(AdminReport report) {
     _dataSource.reports.insert(0, report);
-    notifyListeners();
+    _changesController.add(null);
+  }
+
+  void dispose() {
+    unawaited(_changesController.close());
   }
 }
