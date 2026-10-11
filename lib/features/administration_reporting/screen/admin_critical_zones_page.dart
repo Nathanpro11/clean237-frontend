@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
@@ -46,7 +47,7 @@ class AdminCriticalZonesPage extends StatelessWidget {
                           if (context.canPop()) {
                             context.pop();
                           } else {
-                            context.go('/admin/dashboard');
+                            context.go(AppRoutes.dashboard);
                           }
                         },
                       ),
@@ -95,7 +96,7 @@ class AdminCriticalZonesPage extends StatelessWidget {
                             zone: zone,
                             variant: ZoneCardVariant.circularGauge,
                             onTap: () =>
-                                context.push('/admin/zones/${zone.id}'),
+                                context.push(AppRoutes.zoneDetails(zone.id)),
                           ),
                         );
                       }).toList(),
@@ -111,7 +112,7 @@ class AdminCriticalZonesPage extends StatelessWidget {
                       return ZoneCard(
                         zone: zone,
                         variant: ZoneCardVariant.circularGauge,
-                        onTap: () => context.push('/admin/zones/${zone.id}'),
+                        onTap: () => context.push(AppRoutes.zoneDetails(zone.id)),
                       );
                     }, childCount: criticalZones.length),
                   ),

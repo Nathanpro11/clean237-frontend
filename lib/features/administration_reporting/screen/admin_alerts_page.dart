@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
@@ -67,7 +68,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                           if (context.canPop()) {
                             context.pop();
                           } else {
-                            context.go('/admin/dashboard');
+                            context.go(AppRoutes.dashboard);
                           }
                         },
                       ),
@@ -143,7 +144,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                           child: AlertCard(
                             alert: alert,
                             onTap: () =>
-                                context.push('/admin/alerts/${alert.id}'),
+                                context.push(AppRoutes.alertDetails(alert.id)),
                           ),
                         );
                       }).toList(),
@@ -158,7 +159,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                       final alert = filteredAlerts[index];
                       return AlertCard(
                         alert: alert,
-                        onTap: () => context.push('/admin/alerts/${alert.id}'),
+                        onTap: () => context.push(AppRoutes.alertDetails(alert.id)),
                       );
                     }, childCount: filteredAlerts.length),
                   ),

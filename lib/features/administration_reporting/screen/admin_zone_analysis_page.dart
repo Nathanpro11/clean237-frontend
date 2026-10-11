@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
@@ -55,7 +56,7 @@ class _AdminZoneAnalysisPageState extends State<AdminZoneAnalysisPage> {
                         if (context.canPop()) {
                           context.pop();
                         } else {
-                          context.go('/admin/zones/${widget.zoneId}');
+                          context.go(AppRoutes.zoneDetails(widget.zoneId));
                         }
                       },
                     ),
@@ -224,7 +225,7 @@ class _AdminZoneAnalysisPageState extends State<AdminZoneAnalysisPage> {
                 ),
                 onPressed: () {
                   context.push(
-                    '/admin/reports/generate?preselectedZoneId=${zone.id}',
+                    AppRoutes.generateReport(preselectedZoneId: zone.id),
                   );
                 },
               ),
@@ -255,7 +256,7 @@ class _AdminZoneAnalysisPageState extends State<AdminZoneAnalysisPage> {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go('/admin/zones');
+                  context.go(AppRoutes.zones);
                 }
               },
             ),

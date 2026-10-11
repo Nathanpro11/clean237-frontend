@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
@@ -58,7 +59,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
           if (context.canPop()) {
             context.pop();
           } else {
-            context.go('/admin/alerts');
+            context.go(AppRoutes.alerts);
           }
         },
         child: BlocBuilder<AlertsCubit, AlertsState>(
@@ -94,7 +95,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
                         if (context.canPop()) {
                           context.pop();
                         } else {
-                          context.go('/admin/alerts');
+                          context.go(AppRoutes.alerts);
                         }
                       },
                     ),
@@ -142,7 +143,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
                           InkWell(
                             borderRadius: BorderRadius.circular(8),
                             onTap: () {
-                              context.push('/admin/zones/${alert.zoneId}');
+                              context.push(AppRoutes.zoneDetails(alert.zoneId));
                             },
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -360,7 +361,7 @@ class _AdminAlertDetailsPageState extends State<AdminAlertDetailsPage> {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go('/admin/alerts');
+                  context.go(AppRoutes.alerts);
                 }
               },
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
@@ -27,9 +28,9 @@ class AdminDashboardPage extends StatelessWidget {
       currentNavIndex: 0,
       onNavTabSelected: (index) {
         if (index == 1) {
-          context.go('/admin/zones');
+          context.go(AppRoutes.zones);
         } else if (index == 2) {
-          context.go('/admin/reports');
+          context.go(AppRoutes.reports);
         }
       },
       body: BlocBuilder<DashboardCubit, DashboardState>(
@@ -97,7 +98,7 @@ class AdminDashboardPage extends StatelessWidget {
                                 zone: zone,
                                 variant: ZoneCardVariant.squareScore,
                                 onTap: () =>
-                                    context.push('/admin/zones/${zone.id}'),
+                                    context.push(AppRoutes.zoneDetails(zone.id)),
                               ),
                             );
                           }).toList(),
@@ -109,7 +110,7 @@ class AdminDashboardPage extends StatelessWidget {
                             zone: zone,
                             variant: ZoneCardVariant.squareScore,
                             onTap: () =>
-                                context.push('/admin/zones/${zone.id}'),
+                                context.push(AppRoutes.zoneDetails(zone.id)),
                           ),
                         ),
 
@@ -131,19 +132,19 @@ class AdminDashboardPage extends StatelessWidget {
       children: [
         MetricCard.zones(
           count: viewModel.totalZonesCount,
-          onTap: () => context.push('/admin/zones'),
+          onTap: () => context.push(AppRoutes.zones),
         ),
         MetricCard.critical(
           count: viewModel.criticalZonesCount,
-          onTap: () => context.push('/admin/zones/critical'),
+          onTap: () => context.push(AppRoutes.criticalZones),
         ),
         MetricCard.alerts(
           count: viewModel.activeAlertsCount,
-          onTap: () => context.push('/admin/alerts'),
+          onTap: () => context.push(AppRoutes.alerts),
         ),
         MetricCard.reports(
           count: viewModel.totalReportsCount,
-          onTap: () => context.go('/admin/reports'),
+          onTap: () => context.go(AppRoutes.reports),
         ),
       ],
     );
@@ -160,19 +161,19 @@ class AdminDashboardPage extends StatelessWidget {
       children: [
         MetricCard.zones(
           count: viewModel.totalZonesCount,
-          onTap: () => context.push('/admin/zones'),
+          onTap: () => context.push(AppRoutes.zones),
         ),
         MetricCard.critical(
           count: viewModel.criticalZonesCount,
-          onTap: () => context.push('/admin/zones/critical'),
+          onTap: () => context.push(AppRoutes.criticalZones),
         ),
         MetricCard.alerts(
           count: viewModel.activeAlertsCount,
-          onTap: () => context.push('/admin/alerts'),
+          onTap: () => context.push(AppRoutes.alerts),
         ),
         MetricCard.reports(
           count: viewModel.totalReportsCount,
-          onTap: () => context.go('/admin/reports'),
+          onTap: () => context.go(AppRoutes.reports),
         ),
       ],
     );

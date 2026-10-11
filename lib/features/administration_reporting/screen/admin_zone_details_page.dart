@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
@@ -60,7 +61,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                             if (context.canPop()) {
                               context.pop();
                             } else {
-                              context.go('/admin/zones');
+                              context.go(AppRoutes.zones);
                             }
                           },
                           ),
@@ -121,7 +122,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                             (alert) => AlertCard(
                               alert: alert,
                               onTap: () =>
-                                  context.push('/admin/alerts/${alert.id}'),
+                                  context.push(AppRoutes.alertDetails(alert.id)),
                             ),
                           ),
 
@@ -158,7 +159,9 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                         ),
                         onPressed: () {
                           context.push(
-                            '/admin/reports/generate?preselectedZoneId=${zone.id}',
+                            AppRoutes.generateReport(
+                              preselectedZoneId: zone.id,
+                            ),
                           );
                         },
                       );
@@ -170,7 +173,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                           color: Colors.white,
                         ),
                         onPressed: () {
-                          context.push('/admin/zones/${zone.id}/analysis');
+                          context.push(AppRoutes.zoneAnalysis(zone.id));
                         },
                       );
 
@@ -230,7 +233,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go('/admin/zones');
+                  context.go(AppRoutes.zones);
                 }
               },
             ),

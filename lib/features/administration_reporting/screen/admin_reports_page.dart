@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
@@ -49,9 +50,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       currentNavIndex: 2,
       onNavTabSelected: (index) {
         if (index == 0) {
-          context.go('/admin/dashboard');
+          context.go(AppRoutes.dashboard);
         } else if (index == 1) {
-          context.go('/admin/zones');
+          context.go(AppRoutes.zones);
         }
       },
       body: BlocBuilder<ReportsCubit, ReportsState>(
@@ -155,7 +156,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                           child: ReportCard(
                             report: report,
                             onTap: () =>
-                                context.push('/admin/reports/${report.id}'),
+                                context.push(AppRoutes.reportPreview(report.id)),
                           ),
                         );
                       }).toList(),
@@ -171,7 +172,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                       return ReportCard(
                         report: report,
                         onTap: () =>
-                            context.push('/admin/reports/${report.id}'),
+                            context.push(AppRoutes.reportPreview(report.id)),
                       );
                     }, childCount: filteredReports.length),
                   ),
@@ -204,7 +205,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () {
-            context.push('/admin/reports/generate');
+            context.push(AppRoutes.generateReport());
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

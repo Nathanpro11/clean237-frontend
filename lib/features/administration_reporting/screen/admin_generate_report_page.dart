@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/widgets/admin_app_header.dart';
@@ -50,12 +51,18 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
               ),
             );
             context.push(
-              '/admin/export/success?title=${Uri.encodeComponent(state.title)}&file=${state.generatedFilePath}',
+              AppRoutes.exportSuccess(
+                title: state.title,
+                file: state.generatedFilePath,
+              ),
             );
           } else if (state.submissionStatus == SubmissionStatus.failure) {
             if (state.errorMessage != null) {
               context.push(
-                '/admin/export/failure?title=${Uri.encodeComponent(state.title)}&error=${Uri.encodeComponent(state.errorMessage!)}',
+                AppRoutes.exportFailure(
+                  title: state.title,
+                  error: state.errorMessage,
+                ),
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +100,7 @@ class _AdminGenerateReportPageState extends State<AdminGenerateReportPage> {
                                 if (context.canPop()) {
                                   context.pop();
                                 } else {
-                                  context.go('/admin/reports');
+                                  context.go(AppRoutes.reports);
                                 }
                               },
                             ),

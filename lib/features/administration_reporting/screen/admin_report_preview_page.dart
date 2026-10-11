@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
@@ -46,11 +47,14 @@ class AdminReportPreviewPage extends StatelessWidget {
             listener: (context, state) {
               if (state.status == ExportStatus.success) {
                 context.push(
-                  '/admin/export/success?title=${Uri.encodeComponent(report.title)}&file=${state.generatedFilePath}',
+                  AppRoutes.exportSuccess(
+                    title: report.title,
+                    file: state.generatedFilePath,
+                  ),
                 );
               } else if (state.status == ExportStatus.failure) {
                 context.push(
-                  '/admin/export/failure?title=${Uri.encodeComponent(report.title)}',
+                  AppRoutes.exportFailure(title: report.title),
                 );
               }
             },
@@ -72,7 +76,7 @@ class AdminReportPreviewPage extends StatelessWidget {
                                 if (context.canPop()) {
                                   context.pop();
                                 } else {
-                                  context.go('/admin/reports');
+                                  context.go(AppRoutes.reports);
                                 }
                               },
                             ),
@@ -159,7 +163,7 @@ class AdminReportPreviewPage extends StatelessWidget {
                                 onTap: zone == null
                                     ? null
                                     : () => context.push(
-                                        '/admin/zones/${zone.id}',
+                                        AppRoutes.zoneDetails(zone.id),
                                       ),
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 8),
@@ -298,7 +302,7 @@ class AdminReportPreviewPage extends StatelessWidget {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go('/admin/reports');
+                  context.go(AppRoutes.reports);
                 }
               },
             ),

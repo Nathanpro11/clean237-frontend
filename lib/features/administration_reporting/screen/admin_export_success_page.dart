@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../common/navigator/app_routes.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_scaffold.dart';
@@ -126,12 +127,12 @@ class AdminExportSuccessPage extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
                 onPressed: () {
-                  context.go('/admin/reports');
+                  context.go(AppRoutes.reports);
                 },
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => context.go('/admin/dashboard'),
+                onPressed: () => context.go(AppRoutes.dashboard),
                 child: const Text('Aller au tableau de bord'),
               ),
               const SizedBox(height: 24),
