@@ -13,8 +13,9 @@ import '../../../common/widgets/primary_button.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
 import '../../../common/widgets/status_badge.dart';
-import '../models/zone_model.dart';
 import '../viewmodels/zone_details_cubit.dart';
+import 'widgets/priority_checklist.dart';
+import 'widgets/zone_summary_card.dart';
 
 class AdminZoneDetailsPage extends StatefulWidget {
   final String zoneId;
@@ -64,8 +65,7 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                           },
                           ),
 
-                        // Top score and stats summary card
-                        _buildSummaryCard(zone),
+                        ZoneSummaryCard(zone: zone),
                         const SizedBox(height: 16),
 
                         // Evolution 30 days chart card
@@ -75,71 +75,13 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Priorities checklist
-                        if (zone.priorities.isNotEmpty) ...[
-                          Text(
-                            'ACTIONS PRIORITAIRES RECOMMANDÉES',
-                            style: AppTextStyles.sectionLabelGreen,
+                        if (zone.priorities.isNotEmpty)
+                          PriorityChecklist(
+                            priorities: zone.priorities,
+                            completedPriorities:
+                                state.completedPriorities,
+                            onToggle: viewModel.togglePriority,
                           ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceWhite,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: AppColors.borderLight,
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: zone.priorities.map((priority) {
-                                final isDone = viewModel.isPriorityCompleted(
-                                  priority,
-                                );
-                                return InkWell(
-                                  onTap: () =>
-                                      viewModel.togglePriority(priority),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 6,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          isDone
-                                              ? Icons.check_circle_rounded
-                                              : Icons
-                                                    .radio_button_unchecked_rounded,
-                                          color: isDone
-                                              ? AppColors.primaryGreen
-                                              : AppColors.textSecondary,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            priority,
-                                            style: AppTextStyles.body.copyWith(
-                                              fontSize: 13.5,
-                                              decoration: isDone
-                                                  ? TextDecoration.lineThrough
-                                                  : null,
-                                              color: isDone
-                                                  ? AppColors.textSecondary
-                                                  : AppColors.textPrimary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
 
                         // ALERTES RÉCENTES section
                         Row(
@@ -258,144 +200,6 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
           );
         },
       ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(Zone zone) {
-    Color scoreBg;
-    Color scoreTextColor;
-
-    switch (zone.status) {
-      case ZoneStatus.critical:
-        scoreBg = AppColors.criticalRedLight;
-        scoreTextColor = AppColors.criticalRed;
-        break;
-      case ZoneStatus.warning:
-        scoreBg = AppColors.warningOrangeLight;
-        scoreTextColor = AppColors.warningOrange;
-        break;
-      case ZoneStatus.normal:
-        scoreBg = AppColors.normalGreenLight;
-        scoreTextColor = AppColors.normalGreen;
-        break;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderLight, width: 1),
-        boxShadow: AppColors.cardShadow,
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: scoreBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${zone.score}',
-                  style: AppTextStyles.scoreLarge.copyWith(
-                    color: scoreTextColor,
-                    fontSize: 26,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      zone.status.label,
-                      style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
-                    ),
-                    const SizedBox(height: 6),
-                    StatusBadge(
-                      label: zone.status.label,
-                      color: scoreTextColor,
-                      variant: BadgeVariant.filled,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Évolution',
-                        style: AppTextStyles.bodySecondary.copyWith(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${zone.evolutionPoints > 0 ? "+" : ""}${zone.evolutionPoints} pts',
-                        style: AppTextStyles.cardTitle.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Dernière mise à jour',
-                        style: AppTextStyles.bodySecondary.copyWith(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        zone.lastUpdate,
-                        style: AppTextStyles.cardTitle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
