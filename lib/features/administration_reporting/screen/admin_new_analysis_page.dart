@@ -6,6 +6,8 @@ import '../../../common/navigator/app_routes.dart';
 import '../../../common/styles/app_colors.dart';
 import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
+import '../../../common/widgets/app_feedback.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/primary_button.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../data/repositories/admin_repository.dart';
@@ -19,10 +21,12 @@ class AdminNewAnalysisPage extends StatelessWidget {
     super.key,
     this.preselectedZoneId,
     this.initialMessage,
+    this.createReportAfterAnalysis = false,
   });
 
   final String? preselectedZoneId;
   final String? initialMessage;
+  final bool createReportAfterAnalysis;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -30,7 +34,14 @@ class AdminNewAnalysisPage extends StatelessWidget {
       context.read<AdminRepository>(),
       preselectedZoneId: preselectedZoneId,
     ),
-    child: BlocBuilder<AnalysisFormCubit, AnalysisFormState>(
+    child: BlocConsumer<AnalysisFormCubit, AnalysisFormState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          current.status == AnalysisSubmissionStatus.failure &&
+          current.errorMessage != null,
+      listener: (context, state) {
+        AppFeedback.showError(context, state.errorMessage);
+      },
       builder: (context, state) {
         final cubit = context.read<AnalysisFormCubit>();
         return AdminScaffold(
@@ -47,7 +58,7 @@ class AdminNewAnalysisPage extends StatelessWidget {
                           title: 'Nouvelle analyse',
                           subtitle: 'Clean237 · Administration',
                           description:
-                              'Choisissez une période et les zones à analyser.',
+                              'Choisissez une période et le périmètre de l’analyse.',
                           showBackButton: true,
                           onBack: () {
                             if (context.canPop()) {
@@ -76,19 +87,29 @@ class AdminNewAnalysisPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                         ],
-                        AnalysisScopeForm(
-                          zones: state.zones,
-                          selectedZoneIds: state.selectedZoneIds,
-                          periodPreset: state.periodPreset,
-                          periodStart: state.periodStart,
-                          periodEnd: state.periodEnd,
-                          periodError: state.periodError,
-                          zonesError: state.zonesError,
-                          onPeriodPresetChanged: cubit.selectPeriodPreset,
-                          onCustomPeriodChanged: (start, end) =>
-                              cubit.setCustomPeriod(start: start, end: end),
-                          onZoneToggled: cubit.toggleZone,
-                        ),
+                        if (state.zonesLoading)
+                          const Center(child: CircularProgressIndicator())
+                        else if (state.zonesLoadError != null)
+                          ErrorState(
+                            message: state.zonesLoadError!,
+                            onRetry: cubit.loadZones,
+                          )
+                        else
+                          AnalysisScopeForm(
+                            zones: state.zones,
+                            selectedZoneIds: state.selectedZoneIds,
+                            periodPreset: state.periodPreset,
+                            periodStart: state.periodStart,
+                            periodEnd: state.periodEnd,
+                            periodError: state.periodError,
+                            zonesError: state.zonesError,
+                            onPeriodPresetChanged: cubit.selectPeriodPreset,
+                            onCustomPeriodChanged: (start, end) =>
+                                cubit.setCustomPeriod(start: start, end: end),
+                            onZoneToggled: cubit.toggleZone,
+                            onAllZonesSelected: cubit.selectAllZones,
+                            zoneSelectionLocked: preselectedZoneId != null,
+                          ),
                       ],
                     ),
                   ),
@@ -111,12 +132,23 @@ class AdminNewAnalysisPage extends StatelessWidget {
                     ),
                     onPressed:
                         state.status == AnalysisSubmissionStatus.submitting
+                            || state.zonesLoading
+                            || state.zonesLoadError != null
                         ? null
                         : () async {
                             final analysis = await cubit.generateAnalysis();
                             if (analysis != null && context.mounted) {
+                              AppFeedback.showSuccess(
+                                context,
+                                cubit.state.successMessage,
+                                fallback: 'Analyse générée avec succès.',
+                              );
                               context.push(
-                                AppRoutes.analysisResult(analysis.id),
+                                createReportAfterAnalysis
+                                    ? AppRoutes.newReport(
+                                        analysisId: analysis.id,
+                                      )
+                                    : AppRoutes.analysisResult(analysis.id),
                               );
                             }
                           },

@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../data/exceptions/app_exception.dart';
 import '../../../data/repositories/admin_repository.dart';
-import '../models/zone_model.dart';
 import 'analysis_result_state.dart';
 
 class AnalysisResultCubit extends Cubit<AnalysisResultState> {
@@ -13,24 +13,20 @@ class AnalysisResultCubit extends Cubit<AnalysisResultState> {
   final AdminRepository _repository;
   final String analysisId;
 
-  void load() {
+  Future<void> load() async {
+    emit(
+      const AnalysisResultState(status: AnalysisResultStatus.loading),
+    );
     try {
-      final analysis = _repository.getAnalysisById(analysisId);
-      if (analysis == null) {
-        emit(const AnalysisResultState(status: AnalysisResultStatus.notFound));
-        return;
-      }
-      final zones = analysis.zoneIds
-          .map(_repository.getZoneById)
-          .whereType<Zone>()
-          .toList(growable: false);
+      final analysis = await _repository.getAnalysisById(analysisId);
       emit(
         AnalysisResultState(
           status: AnalysisResultStatus.success,
           analysis: analysis,
-          zones: List.unmodifiable(zones),
         ),
       );
+    } on NotFoundException {
+      emit(const AnalysisResultState(status: AnalysisResultStatus.notFound));
     } on Object catch (error) {
       emit(
         AnalysisResultState(

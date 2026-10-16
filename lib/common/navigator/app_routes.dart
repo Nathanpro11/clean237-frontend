@@ -23,9 +23,17 @@ abstract final class AppRoutes {
   static String zoneDetails(String zoneId) =>
       '$zones/${Uri.encodeComponent(zoneId)}';
 
-  static String newAnalysis({String? zoneId, String? message}) => Uri(
+  static String newAnalysis({
+    String? zoneId,
+    String? message,
+    bool createReport = false,
+  }) => Uri(
     path: newAnalysisPath,
-    queryParameters: {'zoneId': ?zoneId, 'message': ?message},
+    queryParameters: {
+      'zoneId': ?zoneId,
+      'message': ?message,
+      if (createReport) 'createReport': 'true',
+    },
   ).toString();
 
   static String analysisResult(String analysisId) =>
@@ -52,15 +60,26 @@ abstract final class AppRoutes {
   static String reportPreview(String reportId) =>
       '$reports/${Uri.encodeComponent(reportId)}';
 
-  static String exportSuccess({required String title, String? file}) => Uri(
+  static String exportSuccess({
+    required String title,
+    String? fileName,
+    String? filePath,
+    String? format,
+  }) => Uri(
     path: exportSuccessPath,
-    queryParameters: {'title': title, 'file': ?file},
+    queryParameters: {
+      'title': title,
+      'fileName': ?fileName,
+      'filePath': ?filePath,
+      'format': ?format,
+    },
   ).toString();
 
   static String exportFailure({
     required String title,
     String? error,
     String? analysisId,
+    String? reportId,
     String? description,
     String? format,
   }) => Uri(
@@ -69,6 +88,7 @@ abstract final class AppRoutes {
       'title': title,
       'error': ?error,
       'analyseId': ?analysisId,
+      'reportId': ?reportId,
       'description': ?description,
       'format': ?format,
     },

@@ -111,7 +111,7 @@ class ZoneSelector extends StatelessWidget {
                 ),
               ),
               subtitle: Text(
-                'Score : ${zone.score}/100 · ${zone.status.name}',
+                'Score de risque : ${zone.score}/100 · ${zone.status.name}',
                 style: AppTextStyles.bodySecondary.copyWith(fontSize: 12),
               ),
               onChanged: (_) => onToggle(zone.id),

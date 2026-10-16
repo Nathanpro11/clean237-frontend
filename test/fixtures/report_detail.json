@@ -1,0 +1,22 @@
+{
+  "report": {
+    "_id": "64b000000000000000000031",
+    "titre": "Rapport mensuel",
+    "description": "Synthèse des données.",
+    "type": "synthese",
+    "statut": "pret",
+    "format": "csv",
+    "zones": [{"_id": "64b000000000000000000001", "nom": "Mfoundi Centre"}],
+    "analyseId": {
+      "_id": "64b000000000000000000021",
+      "type": "synthese",
+      "periode": {"start": "2026-04-01T00:00:00.000Z", "end": "2026-05-01T00:00:00.000Z"},
+      "resultat": "Résultat.",
+      "indicateurs": {"totalPoints": 0, "parType": {}},
+      "createdAt": "2026-05-01T11:00:00.000Z"
+    },
+    "statistiques": {},
+    "createdAt": "2026-05-01T11:05:00.000Z",
+    "updatedAt": "2026-05-01T11:05:00.000Z"
+  }
+}

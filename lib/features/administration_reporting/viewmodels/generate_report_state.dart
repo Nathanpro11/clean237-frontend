@@ -23,7 +23,10 @@ class GenerateReportState extends Equatable {
     this.descriptionError,
     this.status = ReportFormStatus.initial,
     this.errorMessage,
+    this.successMessage,
     this.generatedFilePath,
+    this.generatedFileName,
+    this.generatedReportId,
   });
 
   final String? analysisId;
@@ -35,7 +38,10 @@ class GenerateReportState extends Equatable {
   final String? descriptionError;
   final ReportFormStatus status;
   final String? errorMessage;
+  final String? successMessage;
   final String? generatedFilePath;
+  final String? generatedFileName;
+  final String? generatedReportId;
 
   GenerateReportState copyWith({
     String? analysisId,
@@ -47,12 +53,17 @@ class GenerateReportState extends Equatable {
     String? descriptionError,
     ReportFormStatus? status,
     String? errorMessage,
+    String? successMessage,
     String? generatedFilePath,
+    String? generatedFileName,
+    String? generatedReportId,
     bool clearAnalysis = false,
     bool clearTitleError = false,
     bool clearDescriptionError = false,
     bool clearError = false,
+    bool clearSuccess = false,
     bool clearFile = false,
+    bool clearGeneratedReport = false,
   }) => GenerateReportState(
     analysisId: analysisId ?? this.analysisId,
     analysis: clearAnalysis ? null : analysis ?? this.analysis,
@@ -65,9 +76,16 @@ class GenerateReportState extends Equatable {
         : descriptionError ?? this.descriptionError,
     status: status ?? this.status,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+    successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
     generatedFilePath: clearFile
         ? null
         : generatedFilePath ?? this.generatedFilePath,
+    generatedFileName: clearFile
+        ? null
+        : generatedFileName ?? this.generatedFileName,
+    generatedReportId: clearGeneratedReport
+        ? null
+        : generatedReportId ?? this.generatedReportId,
   );
 
   @override
@@ -81,6 +99,9 @@ class GenerateReportState extends Equatable {
     descriptionError,
     status,
     errorMessage,
+    successMessage,
     generatedFilePath,
+    generatedFileName,
+    generatedReportId,
   ];
 }

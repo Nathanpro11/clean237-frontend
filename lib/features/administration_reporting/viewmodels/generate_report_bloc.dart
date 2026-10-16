@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../data/exceptions/app_exception.dart';
 import '../../../data/repositories/admin_repository.dart';
+import '../../../data/services/report_file_service.dart';
 import '../../../utils/validators/report_validators.dart';
 import '../models/report_model.dart';
 import 'generate_report_event.dart';
@@ -31,20 +33,18 @@ class GenerateReportBloc
   }
 
   final AdminRepository _repository;
+  final ReportFileService _fileService = const ReportFileService();
 
   void setTitle(String title) => add(TitleChanged(title));
   void setDescription(String description) => add(NotesChanged(description));
   void setFormat(ReportFormat format) => add(FormatChanged(format));
 
-  void _onInitialize(
+  Future<void> _onInitialize(
     InitializeReport event,
     Emitter<GenerateReportState> emit,
-  ) {
+  ) async {
     final analysisId = event.analysisId;
-    final analysis = analysisId == null
-        ? null
-        : _repository.getAnalysisById(analysisId);
-    if (analysis == null) {
+    if (analysisId == null || analysisId.isEmpty) {
       emit(
         state.copyWith(
           analysisId: analysisId,
@@ -56,16 +56,40 @@ class GenerateReportBloc
       );
       return;
     }
-    emit(
-      GenerateReportState(
-        analysisId: analysis.id,
-        analysis: analysis,
-        title: event.initialTitle ?? _defaultTitle(analysis.type, analysis.createdAt),
-        description: event.initialDescription,
-        format: event.initialFormat ?? ReportFormat.pdf,
-        status: ReportFormStatus.ready,
-      ),
-    );
+    try {
+      final analysis = await _repository.getAnalysisById(analysisId);
+      emit(
+        GenerateReportState(
+          analysisId: analysis.id,
+          analysis: analysis,
+          title: event.initialTitle ??
+              _defaultTitle(analysis.type, analysis.createdAt),
+          description: event.initialDescription,
+          format: event.initialFormat == ReportFormat.csv
+              ? ReportFormat.csv
+              : ReportFormat.pdf,
+          status: ReportFormStatus.ready,
+        ),
+      );
+    } on AppException catch (error) {
+      emit(
+        state.copyWith(
+          analysisId: analysisId,
+          status: ReportFormStatus.failure,
+          clearAnalysis: true,
+          errorMessage: error.message,
+        ),
+      );
+    } on Object catch (error) {
+      emit(
+        state.copyWith(
+          analysisId: analysisId,
+          status: ReportFormStatus.failure,
+          clearAnalysis: true,
+          errorMessage: error.toString(),
+        ),
+      );
+    }
   }
 
   void _onTitleChanged(TitleChanged event, Emitter<GenerateReportState> emit) {
@@ -80,6 +104,7 @@ class GenerateReportBloc
         status: ReportFormStatus.ready,
         clearError: true,
         clearFile: true,
+        clearGeneratedReport: true,
       ),
     );
   }
@@ -96,6 +121,7 @@ class GenerateReportBloc
         status: ReportFormStatus.ready,
         clearError: true,
         clearFile: true,
+        clearGeneratedReport: true,
       ),
     );
   }
@@ -107,6 +133,7 @@ class GenerateReportBloc
         status: ReportFormStatus.ready,
         clearError: true,
         clearFile: true,
+        clearGeneratedReport: true,
       ),
     );
   }
@@ -146,41 +173,52 @@ class GenerateReportBloc
         status: ReportFormStatus.submitting,
         clearError: true,
         clearFile: true,
+        clearGeneratedReport: true,
+        clearSuccess: true,
       ),
     );
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (event.simulateFailure) {
-      emit(
-        state.copyWith(
-          status: ReportFormStatus.failure,
-          errorMessage: 'Échec de génération du document. Veuillez réessayer.',
-        ),
-      );
-      return;
-    }
     try {
-      final report = _repository.generateReport(
+      final reportResult = await _repository.generateReport(
         analysisId: state.analysisId!,
         title: state.title.trim(),
-        description: state.description.trim(),
+        description: state.description.trim().isEmpty
+            ? null
+            : state.description.trim(),
         format: state.format,
       );
-      final extension = switch (state.format) {
-        ReportFormat.pdf => 'pdf',
-        ReportFormat.excel => 'xlsx',
-        ReportFormat.csv => 'csv',
-      };
+      final report = reportResult.data;
+      emit(state.copyWith(
+        generatedReportId: report.id,
+        successMessage: reportResult.message ?? 'Rapport généré avec succès.',
+      ));
+      final bytes = await _repository.exportReport(report.id, state.format);
+      final savedFile = await _fileService.save(
+        bytes: bytes,
+        title: report.title,
+        format: state.format,
+      );
       emit(
         state.copyWith(
           status: ReportFormStatus.success,
-          generatedFilePath: '${report.id}.$extension',
+          generatedFilePath: savedFile.path,
+          generatedFileName: savedFile.name,
+          generatedReportId: report.id,
+          successMessage: reportResult.message ?? 'Rapport généré avec succès.',
         ),
       );
-    } on AdminRepositoryException catch (error) {
+    } on AppException catch (error) {
       emit(
         state.copyWith(
           status: ReportFormStatus.failure,
           errorMessage: error.message,
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: ReportFormStatus.failure,
+          errorMessage:
+              'Impossible d’enregistrer le fichier exporté. Veuillez réessayer.',
         ),
       );
     }

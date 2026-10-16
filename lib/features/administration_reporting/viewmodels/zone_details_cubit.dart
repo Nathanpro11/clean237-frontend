@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -53,32 +51,36 @@ class ZoneDetailsState extends Equatable {
 class ZoneDetailsCubit extends Cubit<ZoneDetailsState> {
   ZoneDetailsCubit(this._repository, this.zoneId)
     : super(const ZoneDetailsState()) {
-    _subscription = _repository.changes.listen((_) => load());
     load();
   }
 
   final AdminRepository _repository;
   final String zoneId;
-  late final StreamSubscription<void> _subscription;
 
   Zone? get zone => state.zone;
   List<AdminAlert> get alerts => state.alerts;
   Set<String> get completedPriorities => state.completedPriorities;
 
-  void load() {
+  Future<void> load() async {
     emit(state.copyWith(status: ZoneDetailsStatus.loading));
     try {
-      final zone = _repository.getZoneById(zoneId);
+      final zone = await _repository.getZoneDetails(zoneId);
+      final alerts = await _repository.getAlerts(
+        zoneId: zoneId,
+        status: 'active',
+        page: 1,
+        limit: 20,
+      );
       emit(
         state.copyWith(
           status: ZoneDetailsStatus.success,
           zone: zone,
-          alerts: List.unmodifiable(_repository.getAlertsForZone(zoneId)),
-          clearZone: zone == null,
+          alerts: List.unmodifiable(alerts.items),
+          clearZone: false,
           clearError: true,
         ),
       );
-    } catch (error) {
+    } on Object catch (error) {
       emit(
         state.copyWith(
           status: ZoneDetailsStatus.failure,
@@ -97,9 +99,4 @@ class ZoneDetailsCubit extends Cubit<ZoneDetailsState> {
   bool isPriorityCompleted(String priority) =>
       state.completedPriorities.contains(priority);
 
-  @override
-  Future<void> close() async {
-    await _subscription.cancel();
-    return super.close();
-  }
 }

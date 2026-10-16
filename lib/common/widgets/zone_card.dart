@@ -72,40 +72,29 @@ class ZoneCard extends StatelessWidget {
   }
 
   Widget _buildScoreIndicator() {
-    if (variant == ZoneCardVariant.circularGauge) {
-      return ZoneScoreGauge(score: zone.score, size: 56, strokeWidth: 4.5);
-    }
+    final risk = ZoneRiskLevel.fromScore(zone.score);
 
-    // Square pastel box for dashboard
-    Color bg;
-    Color textColor;
-    switch (zone.status) {
-      case ZoneStatus.critical:
-        bg = AppColors.criticalRedLight;
-        textColor = AppColors.criticalRed;
-        break;
-      case ZoneStatus.warning:
-        bg = AppColors.warningOrangeLight;
-        textColor = AppColors.warningOrange;
-        break;
-      case ZoneStatus.normal:
-        bg = AppColors.normalGreenLight;
-        textColor = AppColors.normalGreen;
-        break;
+    if (variant == ZoneCardVariant.circularGauge) {
+      return ZoneScoreGauge(
+        score: zone.score,
+        size: 56,
+        strokeWidth: 4.5,
+        colorOverride: risk.color,
+      );
     }
 
     return Container(
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: bg,
+        color: risk.backgroundColor,
         borderRadius: BorderRadius.circular(16),
       ),
       alignment: Alignment.center,
       child: Text(
         '${zone.score}',
         style: AppTextStyles.scoreLarge.copyWith(
-          color: textColor,
+          color: risk.color,
           fontSize: 22,
         ),
       ),
@@ -117,8 +106,9 @@ class ZoneCard extends StatelessWidget {
     final badgeVariant = isOutlined
         ? BadgeVariant.outlined
         : BadgeVariant.filled;
+    final risk = ZoneRiskLevel.fromScore(zone.score);
 
-    switch (zone.status) {
+    switch (risk.status) {
       case ZoneStatus.critical:
         return StatusBadge.critical(variant: badgeVariant);
       case ZoneStatus.warning:

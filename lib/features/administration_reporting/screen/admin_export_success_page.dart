@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../../common/navigator/app_routes.dart';
 import '../../../common/styles/app_colors.dart';
@@ -12,8 +14,16 @@ import '../../../common/widgets/secondary_button.dart';
 class AdminExportSuccessPage extends StatelessWidget {
   final String title;
   final String? fileName;
+  final String? filePath;
+  final String format;
 
-  const AdminExportSuccessPage({super.key, required this.title, this.fileName});
+  const AdminExportSuccessPage({
+    super.key,
+    required this.title,
+    this.fileName,
+    this.filePath,
+    this.format = 'pdf',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +57,9 @@ class AdminExportSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Le document "$title" a été généré et archivé dans la plateforme Clean237.',
+                kIsWeb
+                    ? 'Fichier téléchargé par votre navigateur.'
+                    : 'Le document "$title" a été enregistré sur votre appareil.',
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
                   fontSize: 14,
@@ -76,10 +88,26 @@ class AdminExportSuccessPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Flexible(
-                        child: Text(
-                          fileName!,
-                          style: AppTextStyles.cardTitle.copyWith(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fileName!,
+                              style: AppTextStyles.cardTitle.copyWith(
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (filePath != null &&
+                                filePath!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                filePath!,
+                                style: AppTextStyles.bodySecondary,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
@@ -87,37 +115,26 @@ class AdminExportSuccessPage extends StatelessWidget {
                 ),
               ],
               const Spacer(),
-              PrimaryButton(
-                label: 'Ouvrir / Visualiser',
-                icon: const Icon(
-                  Icons.open_in_new_rounded,
-                  color: Colors.white,
-                  size: 20,
+              if (!kIsWeb)
+                PrimaryButton(
+                  label: format == 'csv' ? 'Ouvrir le fichier CSV' : 'Ouvrir le PDF',
+                  icon: const Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: filePath == null
+                      ? null
+                      : () async {
+                          final result = await OpenFilex.open(filePath!);
+                          if (!context.mounted) return;
+                          if (result.type != ResultType.done) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(result.message)),
+                            );
+                          }
+                        },
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: AppColors.primaryGreen,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      content: Row(
-                        children: [
-                          const Icon(Icons.download_done_rounded, color: Colors.white),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Ouverture du fichier $fileName...',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
               const SizedBox(height: 12),
               SecondaryButton(
                 label: 'Retourner aux rapports',

@@ -24,7 +24,7 @@ class FormatSelector extends StatelessWidget {
       ),
       const SizedBox(height: 10),
       Row(
-        children: ReportFormat.values.map((format) {
+        children: const [ReportFormat.pdf].map((format) {
           final isSelected = selectedFormat == format;
           return Expanded(
             child: GestureDetector(

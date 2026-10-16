@@ -1,0 +1,16 @@
+{
+  "zones": [
+    {
+      "zoneId": "64b000000000000000000001",
+      "nom": "Mfoundi Centre",
+      "score": 27,
+      "niveau": "critique",
+      "details": {
+        "alertScore": 24,
+        "alertCount": 3,
+        "dataCount": 12,
+        "derniereDonnee": "2026-05-01T10:00:00.000Z"
+      }
+    }
+  ]
+}

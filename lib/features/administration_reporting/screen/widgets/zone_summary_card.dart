@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../common/styles/app_colors.dart';
 import '../../../../common/styles/app_text_styles.dart';
 import '../../../../common/widgets/status_badge.dart';
+import '../../../../common/widgets/zone_score_gauge.dart';
 import '../../models/zone_model.dart';
 
 class ZoneSummaryCard extends StatelessWidget {
@@ -12,17 +13,10 @@ class ZoneSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (scoreBackground, scoreTextColor) = switch (zone.status) {
-      ZoneStatus.critical => (
-        AppColors.criticalRedLight,
-        AppColors.criticalRed,
-      ),
-      ZoneStatus.warning => (
-        AppColors.warningOrangeLight,
-        AppColors.warningOrange,
-      ),
-      ZoneStatus.normal => (AppColors.normalGreenLight, AppColors.normalGreen),
-    };
+    final risk = ZoneRiskLevel.fromScore(zone.score);
+    final scoreBackground = risk.backgroundColor;
+    final scoreTextColor = risk.color;
+    final status = risk.status;
 
     return Container(
       decoration: BoxDecoration(
@@ -58,12 +52,12 @@ class ZoneSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      zone.status.label,
+                      status.label,
                       style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 6),
                     StatusBadge(
-                      label: zone.status.label,
+                      label: status.label,
                       color: scoreTextColor,
                       variant: BadgeVariant.filled,
                     ),
@@ -73,28 +67,41 @@ class ZoneSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              Expanded(
-                child: _ZoneMetric(
-                  label: 'Évolution',
+              if (zone.evolutionPoints != null)
+                _ZoneMetric(
+                  label: 'Évolution du risque',
                   value:
-                      '${zone.evolutionPoints > 0 ? "+" : ""}'
+                      '${zone.evolutionPoints! > 0 ? "+" : ""}'
                       '${zone.evolutionPoints} pts',
                   valueFontSize: 16,
                   valueFontWeight: FontWeight.w800,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ZoneMetric(
+              if (zone.lastUpdate.isNotEmpty)
+                _ZoneMetric(
                   label: 'Dernière mise à jour',
                   value: zone.lastUpdate,
                   valueFontSize: 15,
                   valueFontWeight: FontWeight.w700,
                   maxLines: 1,
                 ),
-              ),
+              if (zone.alertCount != null)
+                _ZoneMetric(
+                  label: 'Alertes actives',
+                  value: '${zone.alertCount}',
+                  valueFontSize: 16,
+                  valueFontWeight: FontWeight.w800,
+                ),
+              if (zone.dataCount != null)
+                _ZoneMetric(
+                  label: 'Données',
+                  value: '${zone.dataCount}',
+                  valueFontSize: 16,
+                  valueFontWeight: FontWeight.w800,
+                ),
             ],
           ),
         ],
@@ -119,7 +126,9 @@ class _ZoneMetric extends StatelessWidget {
   final int? maxLines;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => SizedBox(
+    width: 150,
+    child: Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: AppColors.background,
@@ -146,6 +155,7 @@ class _ZoneMetric extends StatelessWidget {
           overflow: maxLines == null ? null : TextOverflow.ellipsis,
         ),
       ],
+    ),
     ),
   );
 }

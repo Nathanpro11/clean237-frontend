@@ -8,6 +8,7 @@ import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
 import '../../../common/widgets/empty_state.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../common/widgets/zone_card.dart';
@@ -24,12 +25,22 @@ class AdminCriticalZonesPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => ZonesCubit(
         context.read<AdminRepository>(),
-        initialFilter: 'Critique',
+        initialFilter: 'Critiques',
       ),
       child: AdminScaffold(
         body: BlocBuilder<ZonesCubit, ZonesState>(
           builder: (context, state) {
           final criticalZones = state.zones;
+          if (state.status == ZonesStatus.initial ||
+              state.status == ZonesStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.status == ZonesStatus.failure) {
+            return ErrorState(
+              message: state.errorMessage ?? 'Erreur de chargement.',
+              onRetry: context.read<ZonesCubit>().load,
+            );
+          }
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [

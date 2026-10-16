@@ -24,13 +24,13 @@ class MetricCard extends StatelessWidget {
   factory MetricCard.zones({
     Key? key,
     required int count,
-    String subtitle = "4 nouvelles aujourd'hui",
+    String subtitle = 'Total des zones',
     VoidCallback? onTap,
   }) {
     return MetricCard(
       key: key,
       count: count,
-      title: 'Zones actives',
+      title: 'Zones',
       subtitle: subtitle,
       countColor: AppColors.textPrimary,
       countBgColor: const Color(0xFFF1F5F9),
@@ -41,7 +41,7 @@ class MetricCard extends StatelessWidget {
   factory MetricCard.critical({
     Key? key,
     required int count,
-    String subtitle = '1 zone nécessite une action',
+    String subtitle = 'Zones de niveau critique',
     VoidCallback? onTap,
   }) {
     return MetricCard(
@@ -58,7 +58,7 @@ class MetricCard extends StatelessWidget {
   factory MetricCard.alerts({
     Key? key,
     required int count,
-    String subtitle = '3 en attente de validation',
+    String subtitle = 'Alertes actives',
     VoidCallback? onTap,
   }) {
     return MetricCard(
@@ -75,13 +75,13 @@ class MetricCard extends StatelessWidget {
   factory MetricCard.reports({
     Key? key,
     required int count,
-    String subtitle = '2 rapports prêts à exporter',
+    String subtitle = 'Total des rapports',
     VoidCallback? onTap,
   }) {
     return MetricCard(
       key: key,
       count: count,
-      title: 'Rapports du mois',
+      title: 'Rapports',
       subtitle: subtitle,
       countColor: AppColors.normalGreen,
       countBgColor: AppColors.normalGreenLight,
@@ -91,6 +91,13 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isZeroAlertOrCritical =
+        count == 0 && (title == 'Critiques' || title == 'Alertes');
+    final effectiveCountColor =
+        isZeroAlertOrCritical ? AppColors.normalGreen : countColor;
+    final effectiveCountBgColor =
+        isZeroAlertOrCritical ? AppColors.normalGreenLight : countBgColor;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -113,14 +120,14 @@ class MetricCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: countBgColor,
+                    color: effectiveCountBgColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '$count',
                     style: AppTextStyles.metricNumber.copyWith(
-                      color: countColor,
+                      color: effectiveCountColor,
                       fontSize: 22,
                     ),
                   ),

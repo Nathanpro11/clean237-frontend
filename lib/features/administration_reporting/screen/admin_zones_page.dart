@@ -10,6 +10,7 @@ import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
 import '../../../common/widgets/app_search_field.dart';
 import '../../../common/widgets/empty_state.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/filter_chip_group.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
@@ -64,6 +65,17 @@ class _AdminZonesPageState extends State<AdminZonesPage> {
           builder: (context, state) {
             final viewModel = context.read<ZonesCubit>();
             final filteredZones = state.zones;
+
+            if (state.status == ZonesStatus.initial ||
+                state.status == ZonesStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == ZonesStatus.failure) {
+              return ErrorState(
+                message: state.errorMessage ?? 'Erreur de chargement.',
+                onRetry: viewModel.load,
+              );
+            }
 
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),

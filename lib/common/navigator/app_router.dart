@@ -31,6 +31,8 @@ abstract final class AppRouter {
         builder: (context, state) => AdminNewAnalysisPage(
           preselectedZoneId: state.uri.queryParameters['zoneId'],
           initialMessage: state.uri.queryParameters['message'],
+          createReportAfterAnalysis:
+              state.uri.queryParameters['createReport'] == 'true',
         ),
       ),
       GoRoute(
@@ -91,7 +93,13 @@ abstract final class AppRouter {
           GoRoute(
             path: AppRoutes.alertIdSegment,
             builder: (context, state) {
-              final alertId = state.pathParameters['alertId'] ?? 'alert_1';
+              final alertId = state.pathParameters['alertId'];
+              if (alertId == null || alertId.isEmpty) {
+                return const AdminExportFailurePage(
+                  title: 'Alerte introuvable',
+                  errorMessage: 'Aucun identifiant d’alerte n’a été fourni.',
+                );
+              }
               return AdminAlertDetailsPage(alertId: alertId);
             },
           ),
@@ -125,7 +133,13 @@ abstract final class AppRouter {
           GoRoute(
             path: AppRoutes.reportIdSegment,
             builder: (context, state) {
-              final reportId = state.pathParameters['reportId'] ?? 'report_1';
+              final reportId = state.pathParameters['reportId'];
+              if (reportId == null || reportId.isEmpty) {
+                return const AdminExportFailurePage(
+                  title: 'Rapport introuvable',
+                  errorMessage: 'Aucun identifiant de rapport n’a été fourni.',
+                );
+              }
               return AdminReportPreviewPage(reportId: reportId);
             },
           ),
@@ -135,8 +149,15 @@ abstract final class AppRouter {
         path: AppRoutes.exportSuccessPath,
         builder: (context, state) {
           final title = state.uri.queryParameters['title'] ?? 'Rapport';
-          final file = state.uri.queryParameters['file'];
-          return AdminExportSuccessPage(title: title, fileName: file);
+          final fileName = state.uri.queryParameters['fileName'];
+          final filePath = state.uri.queryParameters['filePath'];
+          final format = state.uri.queryParameters['format'] ?? 'pdf';
+          return AdminExportSuccessPage(
+            title: title,
+            fileName: fileName,
+            filePath: filePath,
+            format: format,
+          );
         },
       ),
       GoRoute(
@@ -145,6 +166,7 @@ abstract final class AppRouter {
           final title = state.uri.queryParameters['title'] ?? 'Rapport';
           final error = state.uri.queryParameters['error'];
           final analysisId = state.uri.queryParameters['analyseId'];
+          final reportId = state.uri.queryParameters['reportId'];
           final retryPath = analysisId == null
               ? null
               : AppRoutes.newReport(
@@ -156,7 +178,9 @@ abstract final class AppRouter {
           return AdminExportFailurePage(
             title: title,
             errorMessage: error,
-            retryPath: retryPath,
+            retryPath: reportId == null ? retryPath : null,
+            reportId: reportId,
+            format: state.uri.queryParameters['format'],
           );
         },
       ),

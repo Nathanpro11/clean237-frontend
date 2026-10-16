@@ -2,12 +2,12 @@ import 'package:equatable/equatable.dart';
 
 import '../models/zone_model.dart';
 
-enum ZonesStatus { initial, loading, success, failure }
+enum ZonesStatus { initial, loading, success, empty, failure }
 
 enum ZoneSortOption {
   nameAsc('Nom (A-Z)'),
-  scoreAsc('Score croissant'),
-  scoreDesc('Score décroissant');
+  scoreAsc('Score croissant (moins risqué)'),
+  scoreDesc('Score décroissant (plus risqué)');
 
   const ZoneSortOption(this.label);
   final String label;
@@ -18,7 +18,7 @@ class ZonesState extends Equatable {
     this.status = ZonesStatus.initial,
     this.zones = const [],
     this.searchQuery = '',
-    this.selectedFilter = 'Toutes',
+    this.selectedFilter = 'Tous',
     this.sortOption = ZoneSortOption.nameAsc,
     this.totalCount = 0,
     this.errorMessage,

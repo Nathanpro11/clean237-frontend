@@ -1,364 +1,745 @@
-import '../../features/administration_reporting/models/alert_model.dart';
-import '../../features/administration_reporting/models/analysis_model.dart';
-import '../../features/administration_reporting/models/report_model.dart';
-import '../../features/administration_reporting/models/zone_model.dart';
+import 'dart:convert';
 
-class AdminMockDataSource {
-  final List<Zone> zones = [
-    const Zone(
-      id: 'mfoundi-centre',
-      name: 'Mfoundi Centre',
-      score: 42,
-      status: ZoneStatus.critical,
-      evolutionPoints: -12,
-      lastUpdate: 'il y a 12 min',
-      evolution30Days: [65, 62, 58, 54, 50, 46, 44, 42],
-      interpretation: 'La régularité des collectes baisse depuis deux semaines. Prioriser le marché central et renforcer le passage du matin.',
-      priorities: [
-        'Planifier une collecte sous 24 h',
-        'Vérifier les trois dépôts signalés',
-      ],
-    ),
-    const Zone(
-      id: 'biyem-assi',
-      name: 'Biyem-Assi',
-      score: 61,
-      status: ZoneStatus.warning,
-      evolutionPoints: -5,
-      lastUpdate: 'il y a 28 min',
-      evolution30Days: [70, 68, 66, 65, 63, 62, 60, 61],
-      interpretation: 'Zone à surveiller. Légère surcharge constatée le week-end au niveau du carrefour Acacias.',
-      priorities: [
-        'Ajuster les rotations du samedi',
-        'Sensibiliser les commerces riverains',
-      ],
-    ),
-    const Zone(
-      id: 'bastos',
-      name: 'Bastos',
-      score: 86,
-      status: ZoneStatus.normal,
-      evolutionPoints: 4,
-      lastUpdate: 'il y a 45 min',
-      evolution30Days: [80, 82, 83, 84, 85, 86, 85, 86],
-      interpretation: 'Situation excellente. Circuit de collecte fluide et taux de valorisation en progression.',
-      priorities: ['Maintenir la fréquence actuelle'],
-    ),
-    const Zone(
-      id: 'mokolo-marche',
-      name: 'Mokolo Marché',
-      score: 38,
-      status: ZoneStatus.critical,
-      evolutionPoints: -15,
-      lastUpdate: 'il y a 5 min',
-      evolution30Days: [55, 52, 48, 45, 42, 40, 39, 38],
-      interpretation: 'Afflux massif d’encombrants maraîchers. Risque d’obstruction des caniveaux.',
-      priorities: [
-        'Déployer une benne supplémentaire',
-        'Contrôler les dépôts illégaux de nuit',
-      ],
-    ),
-    const Zone(
-      id: 'ngoa-ekelle',
-      name: 'Ngoa-Ekellé',
-      score: 82,
-      status: ZoneStatus.normal,
-      evolutionPoints: 2,
-      lastUpdate: 'il y a 1h',
-    ),
-    const Zone(
-      id: 'nkolbisson',
-      name: 'Nkolbisson',
-      score: 58,
-      status: ZoneStatus.warning,
-      evolutionPoints: -3,
-      lastUpdate: 'il y a 2h',
-    ),
-    const Zone(
-      id: 'omnisports',
-      name: 'Omnisports',
-      score: 79,
-      status: ZoneStatus.normal,
-      evolutionPoints: 1,
-      lastUpdate: 'il y a 3h',
-    ),
-    const Zone(
-      id: 'melen',
-      name: 'Melen',
-      score: 74,
-      status: ZoneStatus.normal,
-      evolutionPoints: 0,
-      lastUpdate: 'il y a 3h',
-    ),
-    const Zone(
-      id: 'essos',
-      name: 'Essos',
-      score: 76,
-      status: ZoneStatus.normal,
-      evolutionPoints: 3,
-      lastUpdate: 'il y a 4h',
-    ),
-    const Zone(
-      id: 'tsinga',
-      name: 'Tsinga',
-      score: 88,
-      status: ZoneStatus.normal,
-      evolutionPoints: 5,
-      lastUpdate: 'il y a 5h',
-    ),
-    const Zone(
-      id: 'mvog-ada',
-      name: 'Mvog-Ada',
-      score: 70,
-      status: ZoneStatus.normal,
-      evolutionPoints: -2,
-      lastUpdate: 'il y a 6h',
-    ),
-    const Zone(
-      id: 'mimboman',
-      name: 'Mimboman',
-      score: 72,
-      status: ZoneStatus.normal,
-      evolutionPoints: 1,
-      lastUpdate: 'il y a 6h',
-    ),
-  ];
+import '../exceptions/app_exception.dart';
+import 'admin_remote_data_source.dart';
 
-  final List<AdminAlert> alerts = [
-    const AdminAlert(
-      id: 'alert_1',
-      title: 'Collecte en retard · 2 j',
-      subtitle: 'Dernière collecte il y a 48 h',
-      zoneId: 'mfoundi-centre',
-      zoneName: 'Mfoundi Centre',
-      date: '03 oct. 2026',
-      context: 'Retard de passage de la benne de collecte sur l’axe principal du marché.',
-      impact: 'Saturation des bacs et débordements sur la chaussée.',
-      severity: AlertSeverity.critical,
-    ),
-    const AdminAlert(
-      id: 'alert_2',
-      title: '3 dépôts non traités',
-      subtitle: '2 dépôts en attente depuis hier',
-      zoneId: 'mfoundi-centre',
-      zoneName: 'Mfoundi Centre',
-      date: '02 oct. 2026',
-      context: 'Trois dépôts sauvages signalés par les riverains aux abords du complexe scolaire.',
-      impact: 'Risque sanitaire et encombrement de la voie publique.',
-      severity: AlertSeverity.critical,
-    ),
-    const AdminAlert(
-      id: 'alert_3',
-      title: 'Capteur saturé · Marché central',
-      subtitle: 'Niveau critique détecté à 08:42',
-      zoneId: 'mfoundi-centre',
-      zoneName: 'Mfoundi Centre',
-      date: '03 oct. 2026 à 08:42',
-      context: 'Le capteur volumétrique du bac B-12 a dépassé 95% de sa capacité nominale.',
-      impact: 'Nécessite une vidange d’urgence sous 2 heures.',
-      severity: AlertSeverity.critical,
-    ),
-    const AdminAlert(
-      id: 'alert_4',
-      title: 'Dépôt sauvage en expansion',
-      subtitle: 'Signalement citoyen validé',
-      zoneId: 'biyem-assi',
-      zoneName: 'Biyem-Assi',
-      date: '02 oct. 2026',
-      context: 'Accumulation d’encombrants au carrefour Acacias.',
-      impact: 'Gêne pour la circulation des piétons.',
-      severity: AlertSeverity.warning,
-    ),
-    const AdminAlert(
-      id: 'alert_5',
-      title: 'Bac endommagé',
-      subtitle: 'Remplacement requis',
-      zoneId: 'mokolo-marche',
-      zoneName: 'Mokolo Marché',
-      date: '01 oct. 2026',
-      context: 'Couvercle cassé et fissure sur la cuve après collecte.',
-      impact: 'Odeurs et insalubrité.',
-      severity: AlertSeverity.critical,
-    ),
-    const AdminAlert(
-      id: 'alert_6',
-      title: 'Ralentissement rotation benne',
-      subtitle: 'Incident mécanique mineur',
-      zoneId: 'biyem-assi',
-      zoneName: 'Biyem-Assi',
-      date: '03 oct. 2026',
-      context: 'Camion benne C-04 en révision express d’urgence.',
-      impact: 'Décalage prévisionnel de 4 h sur la tournée.',
-      severity: AlertSeverity.warning,
-    ),
-    const AdminAlert(
-      id: 'alert_7',
-      title: 'Collecte nocturne incomplète',
-      subtitle: 'Accès bloqué par travaux',
-      zoneId: 'mvog-ada',
-      zoneName: 'Mvog-Ada',
-      date: '02 oct. 2026',
-      context: 'Rue principale barrée pour travaux d’assainissement.',
-      impact: '3 points d’apport volontaire non collectés.',
-      severity: AlertSeverity.warning,
-    ),
-  ];
-
-  late final List<Analysis> analyses = [
-    _demoAnalysis(
-      id: 'analysis_demo_default',
-      type: 'Synthèse mensuelle',
-      zoneIds: [
-        'mfoundi-centre',
-        'biyem-assi',
-        'bastos',
-        'mokolo-marche',
-        'mvog-ada',
-      ],
-      periodStart: DateTime(2026, 9),
-      periodEnd: DateTime(2026, 9, 30),
-      createdAt: DateTime(2026, 9, 22),
-    ),
-    _demoAnalysis(
-      id: 'analysis_demo_report_2',
-      type: 'Suivi hebdomadaire',
-      zoneIds: ['mfoundi-centre', 'mokolo-marche', 'bastos'],
-      periodStart: DateTime(2026, 9, 8),
-      periodEnd: DateTime(2026, 9, 15),
-      createdAt: DateTime(2026, 9, 15),
-    ),
-    _demoAnalysis(
-      id: 'analysis_demo_report_3',
-      type: 'Bilan mensuel',
-      zoneIds: [
-        'mfoundi-centre',
-        'biyem-assi',
-        'bastos',
-        'mokolo-marche',
-        'ngoa-ekelle',
-        'omnisports',
-        'melen',
-        'essos',
-      ],
-      periodStart: DateTime(2026, 8),
-      periodEnd: DateTime(2026, 8, 31),
-      createdAt: DateTime(2026, 8, 31),
-    ),
-    _demoAnalysis(
-      id: 'analysis_demo_report_4',
-      type: 'Synthèse trimestrielle',
-      zoneIds: zones.map((zone) => zone.id).toList(growable: false),
-      periodStart: DateTime(2026, 7),
-      periodEnd: DateTime(2026, 9, 30),
-      createdAt: DateTime(2026, 9, 28),
-    ),
-  ];
-
-  late final List<AdminReport> reports = [
-    _demoReport(
-      id: 'report_1',
-      analysisId: 'analysis_demo_default',
-      title: 'Rapport municipal · Septembre',
-      type: ReportType.synthesis,
-      status: ReportStatus.ready,
-      date: '22 sept. 2026',
-      summary:
-          'Bilan de performance et indicateurs d’assainissement pour le mois de septembre.',
-    ),
-    _demoReport(
-      id: 'report_2',
-      analysisId: 'analysis_demo_report_2',
-      title: 'Suivi hebdomadaire Mfoundi',
-      type: ReportType.tracking,
-      status: ReportStatus.inProgress,
-      date: '15 sept. 2026',
-      summary:
-          'Audit des points de friction et cadencement des camions bennes.',
-    ),
-    _demoReport(
-      id: 'report_3',
-      analysisId: 'analysis_demo_report_3',
-      title: 'Bilan collecte · Août',
-      type: ReportType.export,
-      status: ReportStatus.archived,
-      date: '31 août 2026',
-      summary:
-          'Archive définitive des volumes collectés au mois d’août 2026.',
-    ),
-    _demoReport(
-      id: 'report_4',
-      analysisId: 'analysis_demo_report_4',
-      title: 'Synthèse propreté urbaine T3',
-      type: ReportType.synthesis,
-      status: ReportStatus.ready,
-      date: '28 sept. 2026',
-      summary: 'Synthèse consolidée du 3e trimestre 2026.',
-    ),
-  ];
-
-  Analysis _demoAnalysis({
-    required String id,
-    required String type,
-    required List<String> zoneIds,
-    required DateTime periodStart,
-    required DateTime periodEnd,
-    required DateTime createdAt,
-  }) {
-    final selectedZones = zones
-        .where((zone) => zoneIds.contains(zone.id))
-        .toList(growable: false);
-    final scores = selectedZones.map((zone) => zone.score).toList();
-    final sum = scores.fold<int>(0, (total, score) => total + score);
-    final average = scores.isEmpty ? 0.0 : sum / scores.length;
-    final indicators = AnalysisIndicators(
-      totalPoints: scores.length,
-      average: average,
-      minimum: scores.isEmpty ? 0 : scores.reduce((a, b) => a < b ? a : b),
-      maximum: scores.isEmpty ? 0 : scores.reduce((a, b) => a > b ? a : b),
-      sum: sum,
-      unit: 'pts',
-    );
-    return Analysis(
-      id: id,
-      type: type,
-      periodStart: periodStart,
-      periodEnd: periodEnd,
-      zoneIds: List.unmodifiable(selectedZones.map((zone) => zone.id)),
-      result:
-          'Le score moyen des ${selectedZones.length} zones analysées est de '
-          '${average.toStringAsFixed(1)} pts.',
-      indicators: indicators,
-      createdAt: createdAt,
-    );
+class AdminMockDataSource implements AdminRemoteDataSource {
+  AdminMockDataSource() {
+    _seed();
   }
 
-  AdminReport _demoReport({
-    required String id,
-    required String analysisId,
+  static const _zoneIds = [
+    '66d5f1a2c2b8d61c5e8e0001',
+    '66d5f1a2c2b8d61c5e8e0002',
+    '66d5f1a2c2b8d61c5e8e0003',
+    '66d5f1a2c2b8d61c5e8e0004',
+    '66d5f1a2c2b8d61c5e8e0005',
+    '66d5f1a2c2b8d61c5e8e0006',
+    '66d5f1a2c2b8d61c5e8e0007',
+    '66d5f1a2c2b8d61c5e8e0008',
+    '66d5f1a2c2b8d61c5e8e0009',
+    '66d5f1a2c2b8d61c5e8e0010',
+    '66d5f1a2c2b8d61c5e8e0011',
+    '66d5f1a2c2b8d61c5e8e0012',
+  ];
+
+  static const _zoneNames = [
+    'Mfoundi Centre',
+    'Biyem-Assi',
+    'Bastos',
+    'Mokolo Marché',
+    'Ngoa-Ekellé',
+    'Nkolbisson',
+    'Omnisports',
+    'Melen',
+    'Essos',
+    'Tsinga',
+    'Mvog-Ada',
+    'Mimboman',
+  ];
+
+  static const _severityScores = [
+    90,
+    68,
+    15,
+    82,
+    8,
+    44,
+    20,
+    33,
+    30,
+    12,
+    48,
+    25,
+  ];
+
+  final List<Map<String, dynamic>> _zones = [];
+  final List<Map<String, dynamic>> _alerts = [];
+  final List<Map<String, dynamic>> _analyses = [];
+  final List<Map<String, dynamic>> _reports = [];
+  final List<Map<String, dynamic>> _environmentalData = [];
+  var _idCounter = 100;
+
+  @override
+  Future<Map<String, dynamic>> getDashboard() async {
+    final byType = <String, int>{};
+    for (final item in _environmentalData) {
+      final type = item['type'] as String;
+      byType[type] = (byType[type] ?? 0) + 1;
+    }
+    final activeAlerts = _alerts
+        .where((item) => item['statut'] == 'active')
+        .length;
+    return _json({
+      'message': 'Dashboard récupéré avec succès',
+      'dashboard': {
+        'totalZones': _zones.length,
+        'totalDataPoints': _environmentalData.length,
+        'dataByType': byType,
+        'totalAnalyses': _analyses.length,
+        'analysesWithResult': _analyses
+            .where((item) => (item['resultat'] as String).isNotEmpty)
+            .length,
+        'totalReports': _reports.length,
+        'reportsWithStats': _reports
+            .where((item) => item['statistiques'] is Map)
+            .length,
+        'zonesCritiques': _zones
+            .where((item) => item['niveau'] == 'critique')
+            .length,
+        'alertesActives': activeAlerts,
+      },
+    });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getProblematicZones() async {
+    return _zones
+        .map((zone) {
+          final zoneId = zone['_id'] as String;
+          final alerts = _alerts
+              .where(
+                (alert) =>
+                    alert['zoneId'] == zoneId && alert['statut'] == 'active',
+              )
+              .length;
+          final points = _environmentalData
+              .where((point) => point['zoneId'] == zoneId)
+              .toList();
+          return {
+            'zoneId': zoneId,
+            'nom': zone['nom'],
+            'score': zone['score'],
+            'niveau': zone['niveau'],
+            'details': {
+              'alertScore': zone['score'],
+              'alertCount': alerts,
+              'dataCount': points.length,
+              'derniereDonnee': points.isEmpty ? null : points.first['date'],
+            },
+          };
+        })
+        .toList(growable: false)
+      ..sort((a, b) => (b['score'] as num).compareTo(a['score'] as num));
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getZones() async =>
+      _copyList(_zones.map((zone) => {'_id': zone['_id'], 'nom': zone['nom']}));
+
+  @override
+  Future<Map<String, dynamic>> getZoneDetails(String zoneId) async {
+    final zone = _find(_zones, zoneId);
+    final points = _environmentalData
+        .where((item) => item['zoneId'] == zoneId)
+        .toList();
+    final severity = zone['score'] as int;
+    final activeAlerts = _alerts
+        .where((item) => item['zoneId'] == zoneId && item['statut'] == 'active')
+        .length;
+    final now = DateTime.now().toUtc();
+    return _json({
+      'message': 'Détails de la zone récupérés avec succès',
+      'zone': {
+        ...zone,
+        'evolutionPoints': 2,
+        'derniereMiseAJour': points.isEmpty ? null : points.first['date'],
+        'evolution30Jours': List.generate(30, (index) {
+          final pointDate = now.subtract(Duration(days: 29 - index));
+          final score = (severity - ((29 - index) % 5) * 2).clamp(0, 100);
+          return {'date': pointDate.toIso8601String(), 'score': score};
+        }),
+        'alertCount': activeAlerts,
+        'dataCount': points.length,
+        'interpretation': zone['niveau'] == 'critique'
+            ? 'Zone critique : $activeAlerts alertes actives.'
+            : 'État de la zone : ${zone['niveau']}.',
+        'priorites': activeAlerts == 0
+            ? <String>[]
+            : <String>['Traiter les $activeAlerts alertes actives'],
+      },
+    });
+  }
+
+  @override
+  Future<Map<String, dynamic>> getEnvironmentalData({
+    String? zoneId,
+    String? type,
+    int page = 1,
+    int limit = 20,
+    String sort = 'date',
+    String order = 'desc',
+  }) async {
+    final filtered = _environmentalData.where((item) {
+      return (zoneId == null || item['zoneId'] == zoneId) &&
+          (type == null || item['type'] == type);
+    }).toList();
+    filtered.sort((a, b) {
+      final comparison = (a[sort] ?? '').toString().compareTo(
+        (b[sort] ?? '').toString(),
+      );
+      return order == 'asc' ? comparison : -comparison;
+    });
+    return _page(filtered, page, limit);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getEnvironmentalDataById(String id) async => {
+    'message': 'Donnée récupérée avec succès',
+    'donnee': _find(_environmentalData, id),
+  };
+
+  @override
+  Future<Map<String, dynamic>> getAlerts({
+    String? severity,
+    String? zoneId,
+    String? status,
+    String? search,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final query = search?.trim().toLowerCase() ?? '';
+    final result = _alerts.where((alert) {
+      return (severity == null || alert['severite'] == severity) &&
+          (zoneId == null || alert['zoneId'] == zoneId) &&
+          (status == null || alert['statut'] == status) &&
+          (query.isEmpty ||
+              '${alert['titre']} ${alert['sousTitre']} ${alert['zoneNom']}'
+                  .toLowerCase()
+                  .contains(query));
+    }).toList();
+    return _page(result, page, limit);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAlertById(String id) async => {
+    'message': 'Alerte récupérée avec succès',
+    'alerte': _find(_alerts, id),
+  };
+
+  @override
+  Future<Map<String, dynamic>> treatAlert(String id) async {
+    final alert = _find(_alerts, id);
+    alert['statut'] = 'traitee';
+    return {'message': 'Alerte traitée avec succès', 'alerte': _json(alert)};
+  }
+
+  @override
+  Future<Map<String, dynamic>> generateAnalysis({
+    String? type,
+    String? zoneId,
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    final points = _environmentalData.where((item) {
+      final date = DateTime.parse(item['date'] as String);
+      return (zoneId == null || item['zoneId'] == zoneId) &&
+          (start == null || !date.isBefore(start)) &&
+          (end == null || !date.isAfter(end));
+    }).toList();
+    if (points.isEmpty) {
+      throw const NotFoundException(
+        'Aucune donnée ne correspond à la période sélectionnée.',
+      );
+    }
+    final byType = <String, List<num>>{};
+    for (final point in points) {
+      byType
+          .putIfAbsent(point['type'] as String, () => [])
+          .add(point['valeur'] as num);
+    }
+    final stats = <String, dynamic>{};
+    for (final entry in byType.entries) {
+      final values = entry.value;
+      final sum = values.fold<num>(0, (total, value) => total + value);
+      stats[entry.key] = {
+        'count': values.length,
+        'moyenne': sum / values.length,
+        'minimum': values.reduce((a, b) => a < b ? a : b),
+        'maximum': values.reduce((a, b) => a > b ? a : b),
+        'somme': sum,
+        'unite': points.firstWhere(
+          (item) => item['type'] == entry.key,
+        )['unite'],
+      };
+    }
+    final id = _nextId();
+    final zone = zoneId == null ? null : _find(_zones, zoneId);
+    final now = DateTime.now().toUtc().toIso8601String();
+    final analysis = {
+      '_id': id,
+      'type': type ?? 'analyse',
+      ...?_optionalField('zoneId', zoneId),
+      ...?_optionalField('zoneNom', zone?['nom']),
+      'periode': {
+        'start': (start ?? DateTime.now().subtract(const Duration(days: 7)))
+            .toUtc()
+            .toIso8601String(),
+        'end': (end ?? DateTime.now()).toUtc().toIso8601String(),
+      },
+      'resultat': 'Analyse de ${points.length} points de données.',
+      'indicateurs': {'totalPoints': points.length, 'parType': stats},
+      'donneesUtilisees': points.map((item) => item['_id']).toList(),
+      'createdAt': now,
+      'updatedAt': now,
+    };
+    _analyses.insert(0, analysis);
+    return {
+      'message': 'Analyse générée avec succès',
+      'analyse': _json(analysis),
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAnalysisById(String id) async => {
+    'message': 'Analyse récupérée avec succès',
+    'analyse': _json(_find(_analyses, id)),
+  };
+
+  @override
+  Future<String?> deleteAnalysis(String id) async {
+    if (_reports.any(
+      (report) => _linkedAnalysisId(report['analyseId']) == id,
+    )) {
+      throw const ConflictException(
+        'Cette analyse est liée à un rapport et ne peut pas être supprimée.',
+      );
+    }
+    _analyses.removeWhere((item) => item['_id'] == id);
+    return 'Analyse supprimée avec succès';
+  }
+
+  @override
+  Future<Map<String, dynamic>> generateReport({
     required String title,
-    required ReportType type,
-    required ReportStatus status,
-    required String date,
-    required String summary,
-  }) {
-    final analysis = analyses.firstWhere((item) => item.id == analysisId);
-    final selectedZones = zones
-        .where((zone) => analysis.zoneIds.contains(zone.id))
-        .toList(growable: false);
-    return AdminReport(
-      id: id,
-      analysisId: analysisId,
-      title: title,
-      type: type,
-      status: status,
-      date: date,
-      zoneCount: analysis.indicators.totalPoints,
-      zoneNames: List.unmodifiable(selectedZones.map((zone) => zone.name)),
-      summary: summary,
-      description: summary,
-      createdAt: analysis.createdAt,
-      indicators: analysis.indicators,
-    );
+    String? description,
+    required String analysisId,
+    String? type,
+    required String format,
+  }) async {
+    final analysis = _find(_analyses, analysisId);
+    final zoneId = analysis['zoneId'];
+    final zones = zoneId == null
+        ? <Map<String, dynamic>>[]
+        : [_find(_zones, zoneId.toString())];
+    final now = DateTime.now().toUtc().toIso8601String();
+    final report = {
+      '_id': _nextId(),
+      'titre': title,
+      ...?_optionalField('description', description),
+      'type': type ?? 'synthese',
+      'statut': 'pret',
+      'format': format,
+      'zones': zones
+          .map((zone) => {'_id': zone['_id'], 'nom': zone['nom']})
+          .toList(),
+      'analyseId': analysis,
+      'statistiques': analysis['indicateurs'],
+      'createdAt': now,
+      'updatedAt': now,
+    };
+    _reports.insert(0, report);
+    return {'message': 'Rapport généré avec succès', 'report': _json(report)};
   }
 
+  @override
+  Future<Map<String, dynamic>> getReports({
+    int page = 1,
+    int limit = 10,
+    String sort = 'createdAt',
+    String order = 'desc',
+    String? search,
+    String? status,
+    String? type,
+    String? zoneId,
+  }) async {
+    final query = search?.trim().toLowerCase() ?? '';
+    final reports = _reports.where((report) {
+      final zoneMatch =
+          zoneId == null ||
+          (report['zones'] as List).any((zone) => zone['_id'] == zoneId);
+      return (status == null || report['statut'] == status) &&
+          (type == null || report['type'] == type) &&
+          zoneMatch &&
+          (query.isEmpty ||
+              '${report['titre']} ${report['description'] ?? ''}'
+                  .toLowerCase()
+                  .contains(query));
+    }).toList();
+    reports.sort((a, b) {
+      final comparison = (a[sort] ?? '').toString().compareTo(
+        (b[sort] ?? '').toString(),
+      );
+      return order == 'asc' ? comparison : -comparison;
+    });
+    return _page(reports, page, limit);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getReportById(String id) async => {
+    'message': 'Rapport récupéré avec succès',
+    'report': _json(_find(_reports, id)),
+  };
+
+  @override
+  Future<String?> deleteReport(String id) async {
+    _find(_reports, id);
+    _reports.removeWhere((item) => item['_id'] == id);
+    return 'Rapport supprimé avec succès';
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateReportStatus(
+    String id,
+    String status,
+  ) async {
+    final report = _find(_reports, id);
+    report['statut'] = status;
+    report['updatedAt'] = DateTime.now().toUtc().toIso8601String();
+    return {
+      'message': 'Statut du rapport mis à jour avec succès',
+      'report': _json(report),
+    };
+  }
+
+  @override
+  Future<List<int>> exportReport(String id, String format) async {
+    final report = _find(_reports, id);
+    if (format == 'csv') {
+      final statistics = report['statistiques'] as Map;
+      final rows = <String>['Type;Nombre;Moyenne;Minimum;Maximum;Somme;Unité'];
+      final perType = statistics['parType'] as Map? ?? const {};
+      for (final entry in perType.entries) {
+        final item = entry.value as Map;
+        rows.add(
+          '${entry.key};${item['count']};${item['moyenne']};${item['minimum']};'
+          '${item['maximum']};${item['somme']};${item['unite'] ?? ''}',
+        );
+      }
+      return utf8.encode('\uFEFF${rows.join('\r\n')}');
+    }
+    return _minimalPdf;
+  }
+
+  static const _minimalPdf = <int>[
+    37,
+    80,
+    68,
+    70,
+    45,
+    49,
+    46,
+    49,
+    10,
+    49,
+    32,
+    48,
+    32,
+    111,
+    98,
+    106,
+    10,
+    60,
+    60,
+    32,
+    47,
+    84,
+    121,
+    112,
+    101,
+    32,
+    47,
+    67,
+    97,
+    116,
+    97,
+    108,
+    111,
+    103,
+    32,
+    47,
+    80,
+    97,
+    103,
+    101,
+    115,
+    32,
+    50,
+    32,
+    48,
+    32,
+    82,
+    32,
+    62,
+    62,
+    10,
+    101,
+    110,
+    100,
+    111,
+    98,
+    106,
+    10,
+    50,
+    32,
+    48,
+    32,
+    111,
+    98,
+    106,
+    10,
+    60,
+    60,
+    32,
+    47,
+    84,
+    121,
+    112,
+    101,
+    32,
+    47,
+    80,
+    97,
+    103,
+    101,
+    115,
+    32,
+    47,
+    75,
+    105,
+    100,
+    115,
+    32,
+    91,
+    51,
+    32,
+    48,
+    32,
+    82,
+    93,
+    32,
+    47,
+    67,
+    111,
+    117,
+    110,
+    116,
+    32,
+    49,
+    32,
+    62,
+    62,
+    10,
+    101,
+    110,
+    100,
+    111,
+    98,
+    106,
+    10,
+    51,
+    32,
+    48,
+    32,
+    111,
+    98,
+    106,
+    10,
+    60,
+    60,
+    32,
+    47,
+    84,
+    121,
+    112,
+    101,
+    32,
+    47,
+    80,
+    97,
+    103,
+    101,
+    32,
+    47,
+    80,
+    97,
+    114,
+    101,
+    110,
+    116,
+    32,
+    50,
+    32,
+    48,
+    32,
+    82,
+    32,
+    47,
+    77,
+    101,
+    100,
+    105,
+    97,
+    66,
+    111,
+    120,
+    32,
+    91,
+    48,
+    32,
+    48,
+    32,
+    51,
+    48,
+    48,
+    32,
+    52,
+    48,
+    48,
+    93,
+    32,
+    62,
+    62,
+    10,
+    101,
+    110,
+    100,
+    111,
+    98,
+    106,
+    10,
+    116,
+    114,
+    105,
+    108,
+    101,
+    114,
+    10,
+    60,
+    60,
+    32,
+    47,
+    82,
+    111,
+    111,
+    116,
+    32,
+    49,
+    32,
+    48,
+    32,
+    82,
+    32,
+    62,
+    62,
+    10,
+    37,
+    37,
+    69,
+    79,
+    70,
+  ];
+
+  Map<String, dynamic> _page(
+    List<Map<String, dynamic>> items,
+    int page,
+    int limit,
+  ) {
+    final start = (page - 1) * limit;
+    final end = (start + limit).clamp(0, items.length);
+    return _json({
+      'message': 'Liste récupérée avec succès',
+      'data': start >= items.length
+          ? <Map<String, dynamic>>[]
+          : items.sublist(start, end),
+      'pagination': {
+        'page': page,
+        'limit': limit,
+        'total': items.length,
+        'totalPages': (items.length / limit).ceil(),
+      },
+    });
+  }
+
+  Map<String, dynamic> _find(List<Map<String, dynamic>> items, String id) {
+    for (final item in items) {
+      if (item['_id'] == id) return item;
+    }
+    throw const NotFoundException('Ressource introuvable.');
+  }
+
+  String _nextId() {
+    _idCounter++;
+    return '66d5f1a2c2b8d61c5e8e${_idCounter.toString().padLeft(4, '0')}';
+  }
+
+  Map<String, dynamic>? _optionalField(String key, Object? value) =>
+      value == null ? null : <String, dynamic>{key: value};
+
+  String? _linkedAnalysisId(dynamic value) =>
+      value is Map ? value['_id']?.toString() : value?.toString();
+
+  Map<String, dynamic> _json(Map<String, dynamic> value) =>
+      Map<String, dynamic>.from(jsonDecode(jsonEncode(value)) as Map);
+
+  List<Map<String, dynamic>> _copyList(Iterable<Map<String, dynamic>> value) =>
+      value.map(_json).toList(growable: false);
+
+  void _seed() {
+    for (var i = 0; i < _zoneIds.length; i++) {
+      final severity = _severityScores[i];
+      _zones.add({
+        '_id': _zoneIds[i],
+        'nom': _zoneNames[i],
+        'score': severity,
+        'niveau': severity >= 80
+            ? 'critique'
+            : severity >= 60
+            ? 'problématique'
+            : severity >= 40
+            ? 'à surveiller'
+            : 'normal',
+      });
+      for (var point = 0; point < 3; point++) {
+        final date = DateTime.now().toUtc().subtract(
+          Duration(hours: i * 3 + point),
+        );
+        _environmentalData.add({
+          '_id':
+              '66d5f1a2c2b8d61c5e8e${(200 + i * 3 + point).toString().padLeft(4, '0')}',
+          'type': point == 0
+              ? 'alerte'
+              : point == 1
+              ? 'dechet'
+              : 'collecte',
+          'zoneId': _zoneIds[i],
+          'valeur': severity + point,
+          'unite': point == 0 ? 'signalements' : 'kg',
+          'date': date.toIso8601String(),
+          'source': 'Saisie terrain',
+          'createdAt': date.toIso8601String(),
+          'updatedAt': date.toIso8601String(),
+        });
+      }
+    }
+    for (var i = 0; i < 7; i++) {
+      final zoneIndex = i % 4;
+      final zone = _zones[zoneIndex];
+      _alerts.add({
+        '_id': '66d5f1a2c2b8d61c5e8e${(300 + i).toString().padLeft(4, '0')}',
+        'titre': 'Alerte · ${zone['nom']}',
+        'sousTitre': 'Signalement',
+        'zoneId': zone['_id'],
+        'zoneNom': zone['nom'],
+        'date': DateTime.now()
+            .toUtc()
+            .subtract(Duration(hours: i + 1))
+            .toIso8601String(),
+        'severite': (zone['niveau'] == 'critique')
+            ? 'critique'
+            : (zone['niveau'] == 'normal' ? 'info' : 'avertissement'),
+        'statut': i == 6 ? 'traitee' : 'active',
+      });
+    }
+  }
 }

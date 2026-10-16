@@ -7,6 +7,8 @@ import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
+import '../../../common/widgets/app_feedback.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/primary_button.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../data/repositories/admin_repository.dart';
@@ -49,43 +51,60 @@ class AdminGenerateReportPage extends StatelessWidget {
         if (state.status == ReportFormStatus.invalidAnalysis) {
           context.go(AppRoutes.newAnalysis(message: state.errorMessage));
         } else if (state.status == ReportFormStatus.success) {
+          AppFeedback.showSuccess(
+            context,
+            state.successMessage,
+            fallback: 'Rapport généré avec succès.',
+          );
           context.push(
             AppRoutes.exportSuccess(
               title: state.title,
-              file: state.generatedFilePath,
+              fileName: state.generatedFileName,
+              filePath: state.generatedFilePath,
+              format: state.format.name,
             ),
           );
         } else if (state.status == ReportFormStatus.failure &&
             state.errorMessage != null) {
+          AppFeedback.showError(context, state.errorMessage);
           context.push(
             AppRoutes.exportFailure(
               title: state.title,
               error: state.errorMessage,
               analysisId: state.analysisId,
+              reportId: state.generatedReportId,
               description: state.description,
               format: state.format.name,
             ),
           );
         } else if (state.status == ReportFormStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              backgroundColor: AppColors.criticalRed,
-              content: Text(
-                'Veuillez corriger les erreurs indiquées ci-dessus.',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+          AppFeedback.showError(
+            context,
+            'Veuillez corriger les erreurs indiquées ci-dessus.',
           );
         }
       },
       child: BlocBuilder<GenerateReportBloc, GenerateReportState>(
         builder: (context, state) {
           final bloc = context.read<GenerateReportBloc>();
-          if (state.status == ReportFormStatus.initial ||
-              state.status == ReportFormStatus.invalidAnalysis ||
-              state.analysis == null) {
+          if (state.status == ReportFormStatus.initial) {
             return const AdminScaffold(
               body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (state.analysis == null) {
+            return AdminScaffold(
+              body: ErrorState(
+                message: state.errorMessage ?? 'Analyse introuvable.',
+                onRetry: () => bloc.add(
+                  InitializeReport(
+                    analysisId: analysisId,
+                    initialTitle: initialTitle,
+                    initialDescription: initialDescription,
+                    initialFormat: initialFormat,
+                  ),
+                ),
+              ),
             );
           }
           final analysis = state.analysis!;
@@ -199,7 +218,7 @@ class _AnalysisReportSummary extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${analysis.zoneIds.length} zones analysées',
+          'Zone : ${analysis.zoneName ?? analysis.zoneId ?? 'Toutes les zones'}',
           style: AppTextStyles.bodySecondary,
         ),
       ],

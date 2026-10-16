@@ -10,6 +10,7 @@ import '../../../common/widgets/admin_scaffold.dart';
 import '../../../common/widgets/alert_card.dart';
 import '../../../common/widgets/app_search_field.dart';
 import '../../../common/widgets/empty_state.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/filter_chip_group.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/secondary_button.dart';
@@ -51,6 +52,17 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
           final viewModel = context.read<AlertsCubit>();
           final filteredAlerts = state.alerts;
 
+          if (state.status == AlertsStatus.initial ||
+              state.status == AlertsStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.status == AlertsStatus.failure) {
+            return ErrorState(
+              message: state.errorMessage ?? 'Erreur de chargement.',
+              onRetry: viewModel.load,
+            );
+          }
+
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -79,18 +91,32 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                         onClear: () => viewModel.setSearchQuery(''),
                       ),
                       const SizedBox(height: 14),
-                      Row(
+                      Column(
                         children: [
-                          Expanded(
-                            child: FilterChipGroup(
-                              filters: AlertsCubit.filters,
-                              selectedFilter: state.selectedFilter,
-                              onSelected: viewModel.setFilter,
-                            ),
+                          FilterChipGroup(
+                            filters: AlertsCubit.filters,
+                            selectedFilter: state.selectedFilter,
+                            onSelected: viewModel.setFilter,
                           ),
-                          const SizedBox(width: 8),
-                          StatusBadge.count(
-                            label: '${filteredAlerts.length} alertes',
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilterChipGroup(
+                                  filters: AlertsCubit.statusFilters,
+                                  selectedFilter: switch (state.selectedStatus) {
+                                    'active' => 'Actives',
+                                    'traitee' => 'Traitées',
+                                    _ => 'Toutes',
+                                  },
+                                  onSelected: viewModel.setStatusFilter,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              StatusBadge.count(
+                                label: '${filteredAlerts.length} alertes',
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -162,6 +188,15 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
                         onTap: () => context.push(AppRoutes.alertDetails(alert.id)),
                       );
                     }, childCount: filteredAlerts.length),
+                  ),
+                ),
+              if (state.page < state.totalPages)
+                SliverToBoxAdapter(
+                  child: ResponsiveContainer(
+                    child: TextButton(
+                      onPressed: viewModel.loadMore,
+                      child: const Text('Charger plus'),
+                    ),
                   ),
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),

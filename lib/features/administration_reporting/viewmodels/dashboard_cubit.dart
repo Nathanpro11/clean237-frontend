@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../data/dto/dashboard_dto.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../models/alert_model.dart';
 import '../models/zone_model.dart';
@@ -9,12 +8,10 @@ import 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   DashboardCubit(this._repository) : super(const DashboardState()) {
-    _subscription = _repository.changes.listen((_) => load());
     load();
   }
 
   final AdminRepository _repository;
-  late final StreamSubscription<void> _subscription;
 
   int get totalZonesCount => state.totalZonesCount;
   int get criticalZonesCount => state.criticalZonesCount;
@@ -23,24 +20,31 @@ class DashboardCubit extends Cubit<DashboardState> {
   List<Zone> get zonesToWatch => state.zonesToWatch;
   List<AdminAlert> get recentAlerts => state.recentAlerts;
 
-  void load() {
+  Future<void> load() async {
     emit(state.copyWith(status: DashboardStatus.loading));
     try {
+      final DashboardDto dashboard = await _repository.getDashboard();
+      final zones = await _repository.getProblematicZones();
+      final alerts = await _repository.getAlerts(
+        status: 'active',
+        page: 1,
+        limit: 3,
+      );
       emit(
         state.copyWith(
           status: DashboardStatus.success,
-          totalZonesCount: _repository.getZones().length,
-          criticalZonesCount: _repository.criticalZones.length,
-          activeAlertsCount: _repository.activeAlerts.length,
-          totalReportsCount: _repository.getReports().length,
-          zonesToWatch: List.unmodifiable(_repository.zonesToWatch),
-          recentAlerts: List.unmodifiable(
-            _repository.activeAlerts.take(3).toList(),
+          totalZonesCount: dashboard.totalZones,
+          criticalZonesCount: dashboard.zonesCritiques,
+          activeAlertsCount: dashboard.alertesActives,
+          totalReportsCount: dashboard.totalReports,
+          zonesToWatch: List.unmodifiable(
+            zones.where((zone) => zone.status != ZoneStatus.normal).take(3),
           ),
+          recentAlerts: List.unmodifiable(alerts.items),
           clearError: true,
         ),
       );
-    } catch (error) {
+    } on Object catch (error) {
       emit(
         state.copyWith(
           status: DashboardStatus.failure,
@@ -48,11 +52,5 @@ class DashboardCubit extends Cubit<DashboardState> {
         ),
       );
     }
-  }
-
-  @override
-  Future<void> close() async {
-    await _subscription.cancel();
-    return super.close();
   }
 }

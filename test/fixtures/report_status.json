@@ -1,0 +1,14 @@
+{
+  "report": {
+    "_id": "64b000000000000000000031",
+    "titre": "Rapport mensuel",
+    "type": "synthese",
+    "statut": "archive",
+    "format": "pdf",
+    "zones": [],
+    "analyseId": "64b000000000000000000021",
+    "statistiques": {},
+    "createdAt": "2026-05-01T11:05:00.000Z",
+    "updatedAt": "2026-05-02T11:05:00.000Z"
+  }
+}

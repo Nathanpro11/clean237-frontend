@@ -56,10 +56,8 @@ class FormatChanged extends GenerateReportEvent {
 }
 
 class SubmitPressed extends GenerateReportEvent {
-  const SubmitPressed({this.simulateFailure = false});
-
-  final bool simulateFailure;
+  const SubmitPressed();
 
   @override
-  List<Object?> get props => [simulateFailure];
+  List<Object?> get props => [];
 }

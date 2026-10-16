@@ -18,6 +18,8 @@ class AnalysisScopeForm extends StatelessWidget {
     required this.onPeriodPresetChanged,
     required this.onCustomPeriodChanged,
     required this.onZoneToggled,
+    required this.onAllZonesSelected,
+    this.zoneSelectionLocked = false,
   });
 
   final List<Zone> zones;
@@ -30,6 +32,8 @@ class AnalysisScopeForm extends StatelessWidget {
   final ValueChanged<AnalysisPeriodPreset> onPeriodPresetChanged;
   final void Function(DateTime? start, DateTime? end) onCustomPeriodChanged;
   final ValueChanged<String> onZoneToggled;
+  final VoidCallback onAllZonesSelected;
+  final bool zoneSelectionLocked;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -88,39 +92,58 @@ class AnalysisScopeForm extends StatelessWidget {
         _errorText(periodError!),
       ],
       const SizedBox(height: 24),
-      Text('Zones à analyser *', style: AppTextStyles.cardTitle),
+      Text('Périmètre de l’analyse', style: AppTextStyles.cardTitle),
       const SizedBox(height: 8),
       if (zonesError != null) ...[
         _errorText(zonesError!),
         const SizedBox(height: 8),
       ],
-      ...zones.map((zone) {
-        final selected = selectedZoneIds.contains(zone.id);
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceWhite,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? AppColors.primaryGreen : AppColors.borderLight,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            child: CheckboxListTile(
-              value: selected,
-              activeColor: AppColors.primaryGreen,
-              title: Text(zone.name, style: AppTextStyles.cardTitle),
-              subtitle: Text(
-                'Score actuel : ${zone.score} pts',
-                style: AppTextStyles.bodySecondary,
+      RadioGroup<String?>(
+        groupValue: selectedZoneIds.isEmpty ? null : selectedZoneIds.single,
+        onChanged: (zoneId) {
+          if (zoneSelectionLocked) return;
+          if (zoneId == null) {
+            onAllZonesSelected();
+          } else {
+            onZoneToggled(zoneId);
+          }
+        },
+        child: Column(
+          children: [
+            if (!zoneSelectionLocked)
+              const RadioListTile<String?>(
+                contentPadding: EdgeInsets.zero,
+                value: null,
+                title: Text('Toutes les zones'),
               ),
-              onChanged: (_) => onZoneToggled(zone.id),
-            ),
-          ),
-        );
-      }),
+            ...zones.map((zone) {
+              final selected = selectedZoneIds.contains(zone.id);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: selected
+                        ? AppColors.primaryGreen
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: RadioListTile<String?>(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  value: zone.id,
+                  enabled: !zoneSelectionLocked,
+                  title: Text(zone.name, style: AppTextStyles.cardTitle),
+                  subtitle: Text(
+                    'Score de risque : ${zone.score}/100',
+                    style: AppTextStyles.bodySecondary,
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     ],
   );
 

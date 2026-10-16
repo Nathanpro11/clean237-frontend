@@ -1,7 +1,46 @@
 import 'package:flutter/material.dart';
 
+import '../../features/administration_reporting/models/zone_model.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
+
+class ZoneRiskLevel {
+  final ZoneStatus status;
+  final Color color;
+  final Color backgroundColor;
+
+  const ZoneRiskLevel({
+    required this.status,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  static ZoneRiskLevel fromScore(int score) {
+    if (score >= 80) {
+      return const ZoneRiskLevel(
+        status: ZoneStatus.critical,
+        color: AppColors.criticalRed,
+        backgroundColor: AppColors.criticalRedLight,
+      );
+    } else if (score >= 40) {
+      return const ZoneRiskLevel(
+        status: ZoneStatus.warning,
+        color: AppColors.warningOrange,
+        backgroundColor: AppColors.warningOrangeLight,
+      );
+    } else {
+      return const ZoneRiskLevel(
+        status: ZoneStatus.normal,
+        color: AppColors.normalGreen,
+        backgroundColor: AppColors.normalGreenLight,
+      );
+    }
+  }
+
+  static ZoneStatus statusFor(int score) => fromScore(score).status;
+  static Color colorFor(int score) => fromScore(score).color;
+  static Color bgColorFor(int score) => fromScore(score).backgroundColor;
+}
 
 class ZoneScoreGauge extends StatelessWidget {
   final int score;
@@ -17,12 +56,7 @@ class ZoneScoreGauge extends StatelessWidget {
     this.colorOverride,
   });
 
-  Color _getColor() {
-    if (colorOverride != null) return colorOverride!;
-    if (score < 50) return AppColors.criticalRed;
-    if (score < 75) return AppColors.warningOrange;
-    return AppColors.normalGreen;
-  }
+  Color _getColor() => colorOverride ?? ZoneRiskLevel.colorFor(score);
 
   @override
   Widget build(BuildContext context) {

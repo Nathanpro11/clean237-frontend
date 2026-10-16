@@ -12,12 +12,11 @@ class AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color dotColor = AppColors.criticalRed;
-    if (alert.severity == AlertSeverity.warning) {
-      dotColor = AppColors.warningOrange;
-    } else if (alert.severity == AlertSeverity.info) {
-      dotColor = AppColors.primaryGreen;
-    }
+    final dotColor = switch (alert.severity) {
+      AlertSeverity.critical => AppColors.criticalRed,
+      AlertSeverity.warning => AppColors.warningOrange,
+      AlertSeverity.info => AppColors.normalGreen,
+    };
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

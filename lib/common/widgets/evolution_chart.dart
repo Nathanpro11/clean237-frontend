@@ -15,14 +15,27 @@ class EvolutionChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNegative = evolutionPoints < 0;
-    final badgeText = '${isNegative ? "" : "+"}$evolutionPoints pts';
-    final badgeColor = isNegative
-        ? AppColors.criticalRed
-        : AppColors.normalGreen;
-    final badgeBg = isNegative
-        ? AppColors.criticalRedLight
-        : AppColors.normalGreenLight;
+    final Color badgeColor;
+    final Color badgeBg;
+    final Color chartColor;
+    final String badgeText;
+
+    if (evolutionPoints == 0) {
+      badgeText = '0 pts';
+      badgeColor = AppColors.textSecondary;
+      badgeBg = AppColors.background;
+      chartColor = AppColors.textSecondary;
+    } else if (evolutionPoints > 0) {
+      badgeText = '+$evolutionPoints pts';
+      badgeColor = AppColors.criticalRed;
+      badgeBg = AppColors.criticalRedLight;
+      chartColor = AppColors.criticalRed;
+    } else {
+      badgeText = '$evolutionPoints pts';
+      badgeColor = AppColors.normalGreen;
+      badgeBg = AppColors.normalGreenLight;
+      chartColor = AppColors.normalGreen;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -101,12 +114,8 @@ class EvolutionChartCard extends StatelessWidget {
             child: CustomPaint(
               painter: _ChartCurvePainter(
                 points: dataPoints,
-                lineColor: isNegative
-                    ? AppColors.criticalRed.withValues(alpha: 0.3)
-                    : AppColors.normalGreen.withValues(alpha: 0.3),
-                gradientColor: isNegative
-                    ? AppColors.criticalRed
-                    : AppColors.normalGreen,
+                lineColor: chartColor.withValues(alpha: 0.3),
+                gradientColor: chartColor,
               ),
             ),
           ),

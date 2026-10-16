@@ -8,6 +8,8 @@ import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
 import '../../../common/widgets/empty_state.dart';
+import '../../../common/widgets/error_state.dart';
+import '../../../common/widgets/alert_card.dart';
 import '../../../common/widgets/metric_card.dart';
 import '../../../common/widgets/responsive_container.dart';
 import '../../../common/widgets/status_badge.dart';
@@ -37,6 +39,17 @@ class AdminDashboardPage extends StatelessWidget {
         builder: (context, state) {
           final viewModel = context.read<DashboardCubit>();
           final zonesToWatch = state.zonesToWatch;
+
+          if (state.status == DashboardStatus.loading ||
+              state.status == DashboardStatus.initial) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.status == DashboardStatus.failure) {
+            return ErrorState(
+              message: state.errorMessage ?? 'Erreur de chargement.',
+              onRetry: viewModel.load,
+            );
+          }
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -83,7 +96,7 @@ class AdminDashboardPage extends StatelessWidget {
                           padding: EdgeInsets.symmetric(vertical: 24),
                           child: EmptyState(
                             title: 'Toutes les zones sont stables',
-                            description: 'Aucune zone ne nécessite une surveillance critique actuellement.',
+                            description: 'Aucune zone ne nécessite de surveillance.',
                           ),
                         )
                       else if (isWide)
@@ -111,6 +124,24 @@ class AdminDashboardPage extends StatelessWidget {
                             variant: ZoneCardVariant.squareScore,
                             onTap: () =>
                                 context.push(AppRoutes.zoneDetails(zone.id)),
+                          ),
+                        ),
+
+                      const SizedBox(height: 20),
+                      Text('Alertes récentes', style: AppTextStyles.sectionTitle),
+                      const SizedBox(height: 12),
+                      if (state.recentAlerts.isEmpty)
+                        const EmptyState(
+                          title: 'Aucune alerte active',
+                          description: 'Aucune alerte active n’est disponible.',
+                        )
+                      else
+                        ...state.recentAlerts.map(
+                          (alert) => AlertCard(
+                            alert: alert,
+                            onTap: () => context.push(
+                              AppRoutes.alertDetails(alert.id),
+                            ),
                           ),
                         ),
 

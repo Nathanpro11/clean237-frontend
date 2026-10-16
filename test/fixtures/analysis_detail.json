@@ -1,0 +1,10 @@
+{
+  "analyse": {
+    "_id": "64b000000000000000000021",
+    "type": "synthese",
+    "periode": {"start": "2026-04-01T00:00:00.000Z", "end": "2026-05-01T00:00:00.000Z"},
+    "resultat": "Résultat calculé par le serveur.",
+    "indicateurs": {"totalPoints": 0, "parType": {}},
+    "createdAt": "2026-05-01T11:00:00.000Z"
+  }
+}

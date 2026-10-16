@@ -1,0 +1,17 @@
+{
+  "analyse": {
+    "_id": "64b000000000000000000021",
+    "type": "synthese",
+    "zoneId": "64b000000000000000000001",
+    "zoneNom": "Mfoundi Centre",
+    "periode": {"start": "2026-04-01T00:00:00.000Z", "end": "2026-05-01T00:00:00.000Z"},
+    "resultat": "Résultat calculé par le serveur.",
+    "indicateurs": {
+      "totalPoints": 2,
+      "parType": {
+        "air": {"count": 2, "moyenne": 12.5, "minimum": 10, "maximum": 15, "somme": 25, "unite": "µg/m³"}
+      }
+    },
+    "createdAt": "2026-05-01T11:00:00.000Z"
+  }
+}

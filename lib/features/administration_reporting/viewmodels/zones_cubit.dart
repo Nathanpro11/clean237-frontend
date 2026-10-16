@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../data/repositories/admin_repository.dart';
@@ -8,15 +6,13 @@ import 'zones_state.dart';
 
 class ZonesCubit extends Cubit<ZonesState> {
   ZonesCubit(this._repository, {String? initialFilter})
-    : super(ZonesState(selectedFilter: initialFilter ?? 'Toutes')) {
-    _subscription = _repository.changes.listen((_) => load());
+    : super(ZonesState(selectedFilter: initialFilter ?? 'Tous')) {
     load();
   }
 
   final AdminRepository _repository;
-  late final StreamSubscription<void> _subscription;
 
-  static const filters = ['Toutes', 'Normal', 'À surveiller', 'Critique'];
+  static const filters = ['Tous', 'Critiques', 'À surveiller', 'Normal'];
 
   String get searchQuery => state.searchQuery;
   String get selectedFilter => state.selectedFilter;
@@ -24,26 +20,27 @@ class ZonesCubit extends Cubit<ZonesState> {
   List<Zone> get filteredZones => state.zones;
   int get totalCount => state.totalCount;
 
-  void load() {
+  Future<void> load() async {
     emit(state.copyWith(status: ZonesStatus.loading));
     try {
+      final allZones = await _repository.getProblematicZones();
       final query = state.searchQuery.trim().toLowerCase();
-      final result = _repository.getZones().where((zone) {
-        if (state.selectedFilter == 'Normal' &&
+      final result = allZones.where((zone) {
+        final filter = state.selectedFilter;
+        if (filter == 'Normal' &&
             zone.status != ZoneStatus.normal) {
           return false;
         }
-        if (state.selectedFilter == 'À surveiller' &&
+        if (filter == 'À surveiller' &&
             zone.status != ZoneStatus.warning) {
           return false;
         }
-        if (state.selectedFilter == 'Critique' &&
+        if ((filter == 'Critiques' || filter == 'Critique') &&
             zone.status != ZoneStatus.critical) {
           return false;
         }
         return query.isEmpty ||
-            zone.name.toLowerCase().contains(query) ||
-            zone.interpretation.toLowerCase().contains(query);
+            zone.name.toLowerCase().contains(query);
       }).toList();
       switch (state.sortOption) {
         case ZoneSortOption.nameAsc:
@@ -55,13 +52,13 @@ class ZonesCubit extends Cubit<ZonesState> {
       }
       emit(
         state.copyWith(
-          status: ZonesStatus.success,
+          status: result.isEmpty ? ZonesStatus.empty : ZonesStatus.success,
           zones: List.unmodifiable(result),
-          totalCount: _repository.getZones().length,
+          totalCount: allZones.length,
           clearError: true,
         ),
       );
-    } catch (error) {
+    } on Object catch (error) {
       emit(
         state.copyWith(
           status: ZonesStatus.failure,
@@ -98,16 +95,11 @@ class ZonesCubit extends Cubit<ZonesState> {
     emit(
       state.copyWith(
         searchQuery: '',
-        selectedFilter: 'Toutes',
+        selectedFilter: 'Tous',
         sortOption: ZoneSortOption.nameAsc,
       ),
     );
     load();
   }
 
-  @override
-  Future<void> close() async {
-    await _subscription.cancel();
-    return super.close();
-  }
 }

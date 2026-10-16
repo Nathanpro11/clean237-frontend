@@ -1,204 +1,274 @@
-import 'dart:async';
-
+import '../dto/alert_dto.dart';
+import '../dto/analysis_dto.dart';
+import '../dto/dashboard_dto.dart';
+import '../dto/environmental_data_dto.dart';
+import '../dto/pagination_dto.dart';
+import '../dto/problematic_zone_dto.dart';
+import '../dto/report_dto.dart';
+import '../dto/zone_details_dto.dart';
+import '../exceptions/app_exception.dart';
+import '../mappers/alert_mapper.dart';
+import '../mappers/analysis_mapper.dart';
+import '../mappers/report_mapper.dart';
+import '../mappers/zone_mapper.dart';
+import '../services/action_result.dart';
+import '../services/admin_remote_data_source.dart';
 import '../../features/administration_reporting/models/alert_model.dart';
 import '../../features/administration_reporting/models/analysis_model.dart';
 import '../../features/administration_reporting/models/report_model.dart';
 import '../../features/administration_reporting/models/zone_model.dart';
-import '../services/admin_mock_data_source.dart';
+import 'paged_result.dart';
 
-class AdminRepositoryException implements Exception {
-  const AdminRepositoryException(this.message);
+export '../services/action_result.dart';
 
-  final String message;
-
-  @override
-  String toString() => message;
-}
-
-/// Repository en mémoire des données du module d'administration.
 class AdminRepository {
-  AdminRepository({AdminMockDataSource? dataSource})
-    : _dataSource = dataSource ?? AdminMockDataSource();
+  AdminRepository({
+    required this._dataSource,
+    this._zoneMapper = const ZoneMapper(),
+    this._alertMapper = const AlertMapper(),
+    this._analysisMapper = const AnalysisMapper(),
+    this._reportMapper = const ReportMapper(),
+  });
 
-  final AdminMockDataSource _dataSource;
-  final StreamController<void> _changesController =
-      StreamController<void>.broadcast();
+  final AdminRemoteDataSource _dataSource;
+  final ZoneMapper _zoneMapper;
+  final AlertMapper _alertMapper;
+  final AnalysisMapper _analysisMapper;
+  final ReportMapper _reportMapper;
 
-  Stream<void> get changes => _changesController.stream;
+  Future<DashboardDto> getDashboard() async =>
+      DashboardDto.fromJson(await _dataSource.getDashboard());
 
-  // Getters
-  List<Zone> getZones() => allZones;
-
-  List<Zone> get allZones => List.unmodifiable(_dataSource.zones);
-  List<Zone> get criticalZones =>
-      _dataSource.zones.where((z) => z.status == ZoneStatus.critical).toList();
-  List<Zone> get warningZones =>
-      _dataSource.zones.where((z) => z.status == ZoneStatus.warning).toList();
-  List<Zone> get zonesToWatch => _dataSource.zones
-      .where((z) => z.status != ZoneStatus.normal)
-      .take(2)
-      .toList();
-
-  List<AdminAlert> getAlerts() => allAlerts;
-
-  List<AdminAlert> get allAlerts => List.unmodifiable(_dataSource.alerts);
-  List<AdminAlert> get activeAlerts =>
-      _dataSource.alerts.where((a) => !a.isHandled).toList();
-  List<AdminAlert> getAlertsForZone(String zoneId) =>
-      _dataSource.alerts.where((a) => a.zoneId == zoneId).toList();
-
-  List<AdminReport> getReports() => allReports;
-
-  List<AdminReport> get allReports => List.unmodifiable(_dataSource.reports);
-  List<Analysis> get analyses => List.unmodifiable(_dataSource.analyses);
-
-  Zone? getZoneById(String id) {
-    try {
-      return _dataSource.zones.firstWhere((z) => z.id == id);
-    } catch (_) {
-      return null;
-    }
+  Future<List<Zone>> getProblematicZones() async {
+    final zones = await _dataSource.getProblematicZones();
+    return zones
+        .map((zone) => _zoneMapper.fromProblematicZone(
+              ProblematicZoneDto.fromJson(zone),
+            ))
+        .toList(growable: false);
   }
 
-  AdminAlert? getAlertById(String id) {
-    try {
-      return _dataSource.alerts.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
+  Future<List<Zone>> getZones() => getProblematicZones();
+
+  Future<Zone> getZoneDetails(String zoneId) async {
+    final response = await _dataSource.getZoneDetails(zoneId);
+    final zone = Map<String, dynamic>.from(response['zone'] as Map);
+    return _zoneMapper.fromDetails(ZoneDetailsDto.fromJson(zone));
   }
 
-  AdminReport? getReportById(String id) {
-    try {
-      return _dataSource.reports.firstWhere((r) => r.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void markAlertAsHandled(String alertId) {
-    final index = _dataSource.alerts.indexWhere((a) => a.id == alertId);
-    if (index != -1) {
-      _dataSource.alerts[index] = _dataSource.alerts[index].copyWith(
-        isHandled: true,
-      );
-      _changesController.add(null);
-    }
-  }
-
-  Analysis? getAnalysisById(String id) {
-    try {
-      return _dataSource.analyses.firstWhere((analysis) => analysis.id == id);
-    } on StateError {
-      return null;
-    }
-  }
-
-  Analysis generateAnalysis({
-    required DateTime? periodStart,
-    required DateTime? periodEnd,
-    required List<String> zoneIds,
-    String type = 'Analyse de propreté',
-  }) {
-    if (periodStart == null || periodEnd == null) {
-      throw const AdminRepositoryException(
-        'La période de l’analyse est obligatoire.',
-      );
-    }
-    if (zoneIds.isEmpty) {
-      throw const AdminRepositoryException(
-        'Sélectionnez au moins une zone pour lancer l’analyse.',
-      );
-    }
-    if (periodStart.isAfter(periodEnd)) {
-      throw const AdminRepositoryException(
-        'La date de début doit précéder ou être égale à la date de fin.',
-      );
-    }
-    final now = DateTime.now();
-    if (DateTime(periodEnd.year, periodEnd.month, periodEnd.day).isAfter(
-      DateTime(now.year, now.month, now.day),
-    )) {
-      throw const AdminRepositoryException(
-        'La date de fin ne peut pas être située dans le futur.',
-      );
-    }
-    final selectedZones = <Zone>[];
-    for (final zoneId in zoneIds.toSet()) {
-      final zone = getZoneById(zoneId);
-      if (zone == null) {
-        throw AdminRepositoryException(
-          'La zone "$zoneId" est introuvable.',
-        );
-      }
-      selectedZones.add(zone);
-    }
-
-    final scores = selectedZones.map((zone) => zone.score).toList();
-    final sum = scores.fold<int>(0, (total, score) => total + score);
-    final average = sum / scores.length;
-    final analysis = Analysis(
-      id: 'analysis_${now.microsecondsSinceEpoch}',
+  Future<PagedResult<EnvironmentalDataDto>> getEnvironmentalData({
+    String? zoneId,
+    String? type,
+    int page = 1,
+    int limit = 20,
+    String sort = 'date',
+    String order = 'desc',
+  }) async {
+    final response = await _dataSource.getEnvironmentalData(
+      zoneId: zoneId,
       type: type,
-      periodStart: periodStart,
-      periodEnd: periodEnd,
-      zoneIds: List.unmodifiable(selectedZones.map((zone) => zone.id)),
-      result:
-          'Le score moyen des ${scores.length} zones analysées est de '
-          '${average.toStringAsFixed(1)} pts sur la période sélectionnée.',
-      indicators: AnalysisIndicators(
-        totalPoints: scores.length,
-        average: average,
-        minimum: scores.reduce((a, b) => a < b ? a : b),
-        maximum: scores.reduce((a, b) => a > b ? a : b),
-        sum: sum,
-        unit: 'pts',
-      ),
-      createdAt: now,
+      page: page,
+      limit: limit,
+      sort: sort,
+      order: order,
     );
-    _dataSource.analyses.insert(0, analysis);
-    _changesController.add(null);
-    return analysis;
+    return _parsePage(
+      response,
+      (item) => EnvironmentalDataDto.fromJson(item),
+    );
   }
 
-  AdminReport generateReport({
+  Future<EnvironmentalDataDto> getEnvironmentalDataById(String id) async {
+    final response = await _dataSource.getEnvironmentalDataById(id);
+    return EnvironmentalDataDto.fromJson(
+      Map<String, dynamic>.from(response['donnee'] as Map),
+    );
+  }
+
+  Future<PagedResult<AdminAlert>> getAlerts({
+    String? severity,
+    String? zoneId,
+    String? status,
+    String? search,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _dataSource.getAlerts(
+      severity: severity,
+      zoneId: zoneId,
+      status: status,
+      search: search,
+      page: page,
+      limit: limit,
+    );
+    return _parsePage(
+      response,
+      (item) => _alertMapper.fromDto(AlertDto.fromJson(item)),
+    );
+  }
+
+  Future<AdminAlert> getAlertById(String id) async {
+    final response = await _dataSource.getAlertById(id);
+    return _alertMapper.fromDto(
+      AlertDto.fromJson(Map<String, dynamic>.from(response['alerte'] as Map)),
+    );
+  }
+
+  Future<ActionResult<AdminAlert>> treatAlert(String id) async {
+    final response = await _dataSource.treatAlert(id);
+    final alert = _alertMapper.fromDto(
+      AlertDto.fromJson(Map<String, dynamic>.from(response['alerte'] as Map)),
+    );
+    return ActionResult(
+      data: alert,
+      message: response['message'] as String?,
+    );
+  }
+
+  Future<ActionResult<Analysis>> generateAnalysis({
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    String? zoneId,
+    String? type,
+  }) async {
+    final response = await _dataSource.generateAnalysis(
+      type: type,
+      zoneId: zoneId,
+      start: periodStart,
+      end: periodEnd,
+    );
+    final analysis = _analysisMapper.fromDto(
+      AnalysisDto.fromJson(
+        Map<String, dynamic>.from(response['analyse'] as Map),
+      ),
+    );
+    return ActionResult(
+      data: analysis,
+      message: response['message'] as String?,
+    );
+  }
+
+  Future<Analysis> getAnalysisById(String id) async {
+    final response = await _dataSource.getAnalysisById(id);
+    return _analysisMapper.fromDto(
+      AnalysisDto.fromJson(
+        Map<String, dynamic>.from(response['analyse'] as Map),
+      ),
+    );
+  }
+
+  Future<String?> deleteAnalysis(String id) => _dataSource.deleteAnalysis(id);
+
+  Future<ActionResult<AdminReport>> generateReport({
     required String analysisId,
     required String title,
-    required String description,
+    String? description,
+    String? type,
     required ReportFormat format,
-  }) {
-    final analysis = getAnalysisById(analysisId);
-    if (analysis == null) {
-      throw const AdminRepositoryException(
-        'Une analyse valide est nécessaire pour créer un rapport.',
+  }) async {
+    if (format == ReportFormat.excel) {
+      throw const ValidationException(
+        'Le format Excel sera bientôt disponible.',
       );
     }
-    final selectedZones = analysis.zoneIds
-        .map(getZoneById)
-        .whereType<Zone>()
-        .toList(growable: false);
-    final now = DateTime.now();
-    final report = AdminReport(
-      id: 'report_${now.microsecondsSinceEpoch}',
-      analysisId: analysis.id,
+    if (analysisId.isEmpty) {
+      throw const ValidationException('Une analyse est nécessaire pour créer un rapport.');
+    }
+    final response = await _dataSource.generateReport(
       title: title,
       description: description,
-      type: ReportType.synthesis,
-      status: ReportStatus.ready,
-      date: 'Aujourd’hui',
-      createdAt: now,
-      zoneCount: analysis.indicators.totalPoints,
-      zoneNames: List.unmodifiable(selectedZones.map((zone) => zone.name)),
-      summary: description.isNotEmpty ? description : analysis.result,
-      format: format,
-      indicators: analysis.indicators,
+      analysisId: analysisId,
+      type: type,
+      format: format == ReportFormat.csv ? 'csv' : 'pdf',
     );
-    _dataSource.reports.insert(0, report);
-    _changesController.add(null);
-    return report;
+    final report = _reportMapper.fromDto(
+      ReportDto.fromJson(Map<String, dynamic>.from(response['report'] as Map)),
+    );
+    return ActionResult(
+      data: report,
+      message: response['message'] as String?,
+    );
   }
 
-  void dispose() {
-    unawaited(_changesController.close());
+  Future<PagedResult<AdminReport>> getReports({
+    int page = 1,
+    int limit = 10,
+    String sort = 'createdAt',
+    String order = 'desc',
+    String? search,
+    String? status,
+    String? type,
+    String? zoneId,
+  }) async {
+    final response = await _dataSource.getReports(
+      page: page,
+      limit: limit,
+      sort: sort,
+      order: order,
+      search: search,
+      status: status,
+      type: type,
+      zoneId: zoneId,
+    );
+    return _parsePage(
+      response,
+      (item) => _reportMapper.fromDto(ReportDto.fromJson(item)),
+    );
+  }
+
+  Future<AdminReport> getReportById(String id) async {
+    final response = await _dataSource.getReportById(id);
+    return _reportMapper.fromDto(
+      ReportDto.fromJson(Map<String, dynamic>.from(response['report'] as Map)),
+    );
+  }
+
+  Future<String?> deleteReport(String id) => _dataSource.deleteReport(id);
+
+  Future<ActionResult<AdminReport>> updateReportStatus(
+    String id,
+    ReportStatus status,
+  ) async {
+    final rawStatus = switch (status) {
+      ReportStatus.ready => 'pret',
+      ReportStatus.inProgress => 'en_cours',
+      ReportStatus.archived => 'archive',
+    };
+    final response = await _dataSource.updateReportStatus(id, rawStatus);
+    final report = _reportMapper.fromDto(
+      ReportDto.fromJson(Map<String, dynamic>.from(response['report'] as Map)),
+    );
+    return ActionResult(
+      data: report,
+      message: response['message'] as String?,
+    );
+  }
+
+  Future<List<int>> exportReport(String id, ReportFormat format) {
+    if (format == ReportFormat.excel) {
+      throw const ValidationException(
+        'Le format Excel sera bientôt disponible.',
+      );
+    }
+    return _dataSource.exportReport(
+      id,
+      format == ReportFormat.csv ? 'csv' : 'pdf',
+    );
+  }
+
+  PagedResult<T> _parsePage<T>(
+    Map<String, dynamic> response,
+    T Function(Map<String, dynamic>) parseItem,
+  ) {
+    final rawData = response['data'] as List? ?? const [];
+    final rawPagination = response['pagination'] is Map
+        ? Map<String, dynamic>.from(response['pagination'] as Map)
+        : const <String, dynamic>{};
+    return PagedResult<T>(
+      items: rawData
+          .map((item) => parseItem(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false),
+      pagination: PaginationDto.fromJson(rawPagination),
+    );
   }
 }

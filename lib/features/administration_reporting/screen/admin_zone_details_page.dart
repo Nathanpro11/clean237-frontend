@@ -8,6 +8,7 @@ import '../../../common/styles/app_colors.dart';
 import '../../../common/styles/app_text_styles.dart';
 import '../../../common/widgets/admin_app_header.dart';
 import '../../../common/widgets/admin_scaffold.dart';
+import '../../../common/widgets/error_state.dart';
 import '../../../common/widgets/alert_card.dart';
 import '../../../common/widgets/evolution_chart.dart';
 import '../../../common/widgets/primary_button.dart';
@@ -40,6 +41,16 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
             final zone = state.zone;
             final alerts = state.alerts;
 
+            if (state.status == ZoneDetailsStatus.loading ||
+                state.status == ZoneDetailsStatus.initial) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == ZoneDetailsStatus.failure) {
+              return ErrorState(
+                message: state.errorMessage ?? 'Erreur de chargement.',
+                onRetry: viewModel.load,
+              );
+            }
             if (zone == null) {
               return _buildZoneNotFound(context);
             }
@@ -70,11 +81,14 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                           const SizedBox(height: 16),
 
                           // Evolution 30 days chart card
-                          EvolutionChartCard(
-                            evolutionPoints: zone.evolutionPoints,
-                            dataPoints: zone.evolution30Days,
-                          ),
-                          const SizedBox(height: 16),
+                          if (zone.evolution30Days.isNotEmpty &&
+                              zone.evolutionPoints != null) ...[
+                            EvolutionChartCard(
+                              evolutionPoints: zone.evolutionPoints!,
+                              dataPoints: zone.evolution30Days,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
 
                           if (zone.priorities.isNotEmpty)
                             PriorityChecklist(
@@ -148,16 +162,31 @@ class _AdminZoneDetailsPageState extends State<AdminZoneDetailsPage> {
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   child: ResponsiveContainer(
                     padding: EdgeInsets.zero,
-                    child: PrimaryButton(
-                      label: 'Générer une Analyse',
-                      icon: const Icon(
-                        Icons.analytics_outlined,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        context.push(AppRoutes.newAnalysis(zoneId: zone.id));
-                      },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PrimaryButton(
+                          label: 'Générer une Analyse',
+                          icon: const Icon(
+                            Icons.analytics_outlined,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            context.push(AppRoutes.newAnalysis(zoneId: zone.id));
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        SecondaryButton(
+                          label: 'Générer un rapport pour cette zone',
+                          onPressed: () => context.push(
+                            AppRoutes.newAnalysis(
+                              zoneId: zone.id,
+                              createReport: true,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

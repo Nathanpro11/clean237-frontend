@@ -1,0 +1,13 @@
+{
+  "dashboard": {
+    "totalZones": 4,
+    "totalDataPoints": 18,
+    "dataByType": {"air": 7, "water": 11},
+    "totalAnalyses": 3,
+    "analysesWithResult": 3,
+    "totalReports": 2,
+    "reportsWithStats": 2,
+    "zonesCritiques": 1,
+    "alertesActives": 5
+  }
+}

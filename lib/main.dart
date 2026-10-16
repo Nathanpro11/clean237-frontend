@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'common/navigator/app_router.dart';
 import 'common/styles/app_theme.dart';
 import 'data/repositories/admin_repository.dart';
+import 'data/services/admin_api_data_source.dart';
+import 'data/services/admin_mock_data_source.dart';
+import 'data/services/admin_remote_data_source.dart';
+import 'utils/constances/api_constants.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('fr');
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -24,9 +30,11 @@ class Clean237App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AdminRemoteDataSource dataSource = ApiConstants.useMockApi
+        ? AdminMockDataSource()
+        : AdminApiDataSource();
     return RepositoryProvider<AdminRepository>(
-      create: (_) => AdminRepository(),
-      dispose: (repository) => repository.dispose(),
+      create: (_) => AdminRepository(dataSource: dataSource),
       child: MaterialApp.router(
         title: 'Clean237 Administration',
         debugShowCheckedModeBanner: false,

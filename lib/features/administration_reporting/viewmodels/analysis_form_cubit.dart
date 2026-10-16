@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../data/exceptions/app_exception.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../utils/validators/report_validators.dart';
 import '../models/analysis_model.dart';
@@ -7,40 +8,65 @@ import 'analysis_form_state.dart';
 
 class AnalysisFormCubit extends Cubit<AnalysisFormState> {
   AnalysisFormCubit(this._repository, {String? preselectedZoneId})
-    : super(_initialState(_repository, preselectedZoneId));
+    : super(_initialState(preselectedZoneId)) {
+    loadZones();
+  }
 
   final AdminRepository _repository;
 
-  static AnalysisFormState _initialState(
-    AdminRepository repository,
-    String? preselectedZoneId,
-  ) {
+  static AnalysisFormState _initialState(String? preselectedZoneId) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final zones = repository.getZones();
-    final preselectedIsKnown = zones.any(
-      (zone) => zone.id == preselectedZoneId,
-    );
     return AnalysisFormState(
-      zones: zones,
-      selectedZoneIds: preselectedIsKnown
-          ? Set.unmodifiable({preselectedZoneId!})
-          : const {},
+      zones: const [],
+      selectedZoneIds: preselectedZoneId == null
+          ? const {}
+          : Set.unmodifiable({preselectedZoneId}),
       periodStart: today.subtract(const Duration(days: 6)),
       periodEnd: today,
-      errorMessage:
-          preselectedZoneId != null && !preselectedIsKnown
-              ? 'La zone demandée est introuvable.'
-              : null,
     );
   }
 
+  Future<void> loadZones() async {
+    emit(state.copyWith(zonesLoading: true, clearZonesLoadError: true));
+    try {
+      final zones = await _repository.getProblematicZones();
+      emit(
+        state.copyWith(
+          zones: List.unmodifiable(zones),
+          zonesLoading: false,
+          clearZonesLoadError: true,
+        ),
+      );
+    } on AppException catch (error) {
+      emit(
+        state.copyWith(zonesLoading: false, zonesLoadError: error.message),
+      );
+    } on Object catch (error) {
+      emit(
+        state.copyWith(zonesLoading: false, zonesLoadError: error.toString()),
+      );
+    }
+  }
+
   void toggleZone(String zoneId) {
-    final selected = Set<String>.of(state.selectedZoneIds);
-    if (!selected.add(zoneId)) selected.remove(zoneId);
+    final selected = state.selectedZoneIds.contains(zoneId)
+        ? <String>{}
+        : <String>{zoneId};
     emit(
       state.copyWith(
         selectedZoneIds: Set.unmodifiable(selected),
+        status: AnalysisSubmissionStatus.idle,
+        clearZonesError: true,
+        clearError: true,
+      ),
+    );
+  }
+
+  void selectAllZones() {
+    emit(
+      state.copyWith(
+        selectedZoneIds: const {},
         status: AnalysisSubmissionStatus.idle,
         clearZonesError: true,
         clearError: true,
@@ -96,15 +122,11 @@ class AnalysisFormCubit extends Cubit<AnalysisFormState> {
       startDate: state.periodStart,
       endDate: state.periodEnd,
     );
-    final zonesError = validateAnalysisZones(state.selectedZoneIds);
-    if (periodError != null || zonesError != null) {
+    if (periodError != null) {
       emit(
         state.copyWith(
           status: AnalysisSubmissionStatus.failure,
           periodError: periodError,
-          zonesError: zonesError,
-          clearPeriodError: periodError == null,
-          clearZonesError: zonesError == null,
           clearError: true,
         ),
       );
@@ -117,17 +139,26 @@ class AnalysisFormCubit extends Cubit<AnalysisFormState> {
         clearPeriodError: true,
         clearZonesError: true,
         clearError: true,
+        clearSuccess: true,
       ),
     );
     try {
-      final analysis = _repository.generateAnalysis(
-        periodStart: state.periodStart,
-        periodEnd: state.periodEnd,
-        zoneIds: state.selectedZoneIds.toList(),
+      final result = await _repository.generateAnalysis(
+        periodStart: state.periodStart!,
+        periodEnd: _inclusiveEndOfDay(state.periodEnd!),
+        zoneId: state.selectedZoneIds.isEmpty
+            ? null
+            : state.selectedZoneIds.single,
       );
-      emit(state.copyWith(status: AnalysisSubmissionStatus.success));
-      return analysis;
-    } on AdminRepositoryException catch (error) {
+      emit(
+        state.copyWith(
+          status: AnalysisSubmissionStatus.success,
+          successMessage: result.message ?? 'Analyse générée avec succès.',
+          clearError: true,
+        ),
+      );
+      return result.data;
+    } on AppException catch (error) {
       emit(
         state.copyWith(
           status: AnalysisSubmissionStatus.failure,
@@ -135,6 +166,17 @@ class AnalysisFormCubit extends Cubit<AnalysisFormState> {
         ),
       );
       return null;
+    } on Object catch (error) {
+      emit(
+        state.copyWith(
+          status: AnalysisSubmissionStatus.failure,
+          errorMessage: error.toString(),
+        ),
+      );
+      return null;
     }
   }
+
+  DateTime _inclusiveEndOfDay(DateTime date) =>
+      DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 }

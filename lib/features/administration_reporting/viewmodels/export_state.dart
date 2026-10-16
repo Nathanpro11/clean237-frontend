@@ -7,12 +7,14 @@ class ExportState extends Equatable {
     this.status = ExportStatus.initial,
     this.errorMessage,
     this.generatedFilePath,
+    this.generatedFileName,
     this.reportTitle,
   });
 
   final ExportStatus status;
   final String? errorMessage;
   final String? generatedFilePath;
+  final String? generatedFileName;
   final String? reportTitle;
 
   bool get isExporting => status == ExportStatus.loading;
@@ -21,6 +23,7 @@ class ExportState extends Equatable {
     ExportStatus? status,
     String? errorMessage,
     String? generatedFilePath,
+    String? generatedFileName,
     String? reportTitle,
     bool clearError = false,
     bool clearFile = false,
@@ -30,6 +33,9 @@ class ExportState extends Equatable {
     generatedFilePath: clearFile
         ? null
         : generatedFilePath ?? this.generatedFilePath,
+    generatedFileName: clearFile
+        ? null
+        : generatedFileName ?? this.generatedFileName,
     reportTitle: reportTitle ?? this.reportTitle,
   );
 
@@ -38,6 +44,7 @@ class ExportState extends Equatable {
     status,
     errorMessage,
     generatedFilePath,
+    generatedFileName,
     reportTitle,
   ];
 }

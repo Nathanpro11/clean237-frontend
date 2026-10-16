@@ -1,0 +1,12 @@
+{
+  "alerte": {
+    "_id": "64b000000000000000000011",
+    "titre": "Niveau critique",
+    "sousTitre": "Dépassement détecté",
+    "zoneId": "64b000000000000000000001",
+    "zoneNom": "Mfoundi Centre",
+    "date": "2026-05-01T10:00:00.000Z",
+    "severite": "avertissement",
+    "statut": "active"
+  }
+}
