@@ -2,7 +2,7 @@ import 'package:clean237_frontend/features/utilisateur/repository/auth_repositor
 import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 import 'package:clean237_frontend/utils/jwt_helper.dart';
 
-/// Implémentation FACTICE d'AuthRepository (sans backend).
+/// Implémentation FACTICE d'AuthRepository (mode hors ligne, sans backend).
 /// Lit et écrit dans UtilisateursStore, partagé avec FakeAdminRepository :
 /// un compte créé ici est visible dans la gestion admin, et un compte
 /// désactivé par l'admin ne peut plus se connecter ici.
@@ -10,6 +10,9 @@ class FakeAuthRepository implements AuthRepository {
   final UtilisateursStore _store;
 
   FakeAuthRepository(this._store);
+
+  /// En mode hors ligne, aucun e-mail n'est envoyé : le code est toujours celui-ci.
+  static const String codeDemo = '123456';
 
   // 🔐 Anti-bruteforce PAR COMPTE : chaque email a son propre compteur
   // d'échecs, pour ne jamais bloquer un compte à cause des tentatives
@@ -144,32 +147,34 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthResult> reinitialiserMotDePasse({
+  Future<AuthResult> demanderCodeReinitialisation({required String email}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Réponse identique que le compte existe ou non (comme le vrai serveur).
+    return AuthResult(succes: true);
+  }
+
+  @override
+  Future<AuthResult> confirmerReinitialisation({
     required String email,
+    required String code,
     required String nouveauMotDePasse,
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
     if (nouveauMotDePasse.trim().length < 6) {
-      return AuthResult(succes: false, messageErreur: '6 caractères minimum requis.');
+      return AuthResult(succes: false, messageErreur: 'Le mot de passe doit contenir au moins 6 caractères.');
     }
 
-    final ok = await _store.reinitialiserMotDePasse(
-      email: email,
-      nouveau: nouveauMotDePasse,
-    );
+    if (code.trim() != codeDemo) {
+      return AuthResult(succes: false, messageErreur: 'Code invalide ou expiré.');
+    }
 
+    final ok = await _store.reinitialiserMotDePasse(email: email, nouveau: nouveauMotDePasse);
     if (!ok) {
-      // Message volontairement générique (on ne confirme pas si l'email existe).
-      return AuthResult(
-        succes: false,
-        messageErreur: "Si ce compte existe, le mot de passe n'a pas pu être réinitialisé.",
-      );
+      return AuthResult(succes: false, messageErreur: 'Code invalide ou expiré.');
     }
 
-    // Déblocage anti-bruteforce associé, par cohérence.
     _tentativesEchoueesParEmail.remove(email.trim().toLowerCase());
-
     return AuthResult(succes: true);
   }
 }
