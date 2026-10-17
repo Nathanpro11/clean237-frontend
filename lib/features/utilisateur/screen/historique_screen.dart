@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
-import 'package:clean237_frontend/features/utilisateur/models/log_model.dart';
+import 'package:clean237_frontend/features/utilisateur/controller/profil_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
-/// Écran "Historique d'activité", basé sur la maquette historique-audit.
-/// Utilise LogModel. Données FACTICES en attendant un vrai HistoriqueRepository.
+/// Écran "Historique d'activité" : journal d'audit réel de l'utilisateur
+/// connecté (GET /utilisateurs/historique/:id), tiré pour actualiser.
 class HistoriqueScreen extends StatelessWidget {
   const HistoriqueScreen({super.key});
 
@@ -15,52 +16,25 @@ class HistoriqueScreen extends StatelessWidget {
   }
 }
 
-class _HistoriqueContenu extends StatelessWidget {
+class _HistoriqueContenu extends StatefulWidget {
   const _HistoriqueContenu();
 
-  // 🧪 Logs mockés — à remplacer par HistoriqueRepository plus tard
-  List<LogModel> get _logsMock => [
-        LogModel(
-          id: '1',
-          utilisateurId: 'u1',
-          action: 'CONNEXION',
-          description: "Connexion réussie à la session d'administration pour Néhémi Mbainadji.",
-          ipAddress: '192.168.43.12',
-          createdAt: DateTime(2026, 8, 23, 9, 30, 0),
-        ),
-        LogModel(
-          id: '2',
-          utilisateurId: 'u1',
-          action: 'INSCRIPTION',
-          description: 'Inscription initiale du compte citoyen pour le suivi de fidélité écologique.',
-          ipAddress: '192.168.43.12',
-          createdAt: DateTime(2026, 8, 23, 4, 11, 0),
-        ),
-        LogModel(
-          id: '3',
-          utilisateurId: 'u2',
-          action: 'MODIFICATION_PROFIL',
-          description: "Modification de l'adresse de collecte principale et du numéro de téléphone.",
-          ipAddress: '127.0.0.1',
-          createdAt: DateTime(2026, 7, 15, 14, 3, 0),
-        ),
-        LogModel(
-          id: '4',
-          utilisateurId: 'u3',
-          action: 'CONNEXION',
-          description: "Connexion réussie via le portail agent de terrain - Validation d'identité.",
-          ipAddress: '192.168.1.50',
-          createdAt: DateTime(2026, 3, 1, 8, 30, 0),
-        ),
-        LogModel(
-          id: '5',
-          utilisateurId: 'u3',
-          action: 'INSCRIPTION',
-          description: 'Enregistrement de la nouvelle benne intelligente connectée pour le secteur Yaoundé VI.',
-          ipAddress: '10.0.0.4',
-          createdAt: DateTime(2026, 3, 1, 8, 0, 0),
-        ),
-      ];
+  @override
+  State<_HistoriqueContenu> createState() => _HistoriqueContenuState();
+}
+
+class _HistoriqueContenuState extends State<_HistoriqueContenu> {
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+  }
+
+  Future<void> _charger() async {
+    // Différé après le premier build (notifyListeners pendant le build est interdit).
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) await context.read<ProfilController>().chargerHistorique();
+  }
 
   Color _couleurPourAction(String action) {
     switch (action) {
@@ -70,20 +44,20 @@ class _HistoriqueContenu extends StatelessWidget {
         return CleanCouleurs.vertEco;
       case 'MODIFICATION_PROFIL':
         return Colors.orange;
+      case 'CHANGEMENT_MOT_DE_PASSE':
+        return Colors.purple;
+      case 'DEMANDE_REINITIALISATION':
+        return Colors.teal;
       default:
         return Colors.grey;
     }
   }
 
-  String _formaterAction(String action) {
-    return action.replaceAll('_', ' ').toLowerCase();
-  }
+  String _formaterAction(String action) => action.replaceAll('_', ' ').toLowerCase();
 
-  String _formaterDate(DateTime date) {
-    const mois = [
-      'Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin',
-      'Juil', 'Aout', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
+  String _formaterDate(DateTime utc) {
+    final date = utc.toLocal(); // le serveur renvoie de l'UTC
+    const mois = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     final heure = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '${date.day} ${mois[date.month - 1]} ${date.year}, $heure:$minute';
@@ -91,10 +65,12 @@ class _HistoriqueContenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ctrl = context.watch<ProfilController>();
+
     return Scaffold(
-      backgroundColor: CleanCouleurs.anthracite,
+      backgroundColor: CleanCouleurs.grisFond,
       appBar: AppBar(
-        backgroundColor: CleanCouleurs.anthracite,
+        backgroundColor: CleanCouleurs.vertEco,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -107,13 +83,50 @@ class _HistoriqueContenu extends StatelessWidget {
         centerTitle: true,
       ),
       bottomNavigationBar: const CleanBottomNav(currentIndex: 3),
-      body: ListView.builder(
+      body: _buildCorps(ctrl),
+    );
+  }
+
+  Widget _buildCorps(ProfilController ctrl) {
+    final logs = ctrl.historiqueLogs;
+
+    if (logs.isEmpty) {
+      return Center(
+        child: ctrl.enChargement
+            ? const CircularProgressIndicator(color: CleanCouleurs.vertEco)
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history, size: 40, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  Text(
+                    ctrl.messageErreur ?? 'Aucune activité enregistrée.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _charger,
+                    icon: const Icon(Icons.refresh, color: CleanCouleurs.vertEco, size: 18),
+                    label: const Text('Actualiser', style: TextStyle(color: CleanCouleurs.vertEco)),
+                    style: OutlinedButton.styleFrom(side: const BorderSide(color: CleanCouleurs.vertEco)),
+                  ),
+                ],
+              ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: CleanCouleurs.vertEco,
+      onRefresh: () => context.read<ProfilController>().chargerHistorique(),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        itemCount: _logsMock.length,
+        itemCount: logs.length,
         itemBuilder: (context, index) {
-          final log = _logsMock[index];
+          final log = logs[index];
           final couleur = _couleurPourAction(log.action);
-          final estDernier = index == _logsMock.length - 1;
+          final estDernier = index == logs.length - 1;
 
           return IntrinsicHeight(
             child: Row(
@@ -124,9 +137,7 @@ class _HistoriqueContenu extends StatelessWidget {
                   children: [
                     Icon(Icons.circle, color: couleur, size: 14),
                     if (!estDernier)
-                      Expanded(
-                        child: Container(width: 2, color: Colors.grey.shade800),
-                      ),
+                      Expanded(child: Container(width: 2, color: Colors.grey.shade300)),
                   ],
                 ),
                 const SizedBox(width: 14),
@@ -150,7 +161,7 @@ class _HistoriqueContenu extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           log.description,
-                          style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                          style: const TextStyle(color: Colors.black, fontSize: 13, height: 1.4),
                         ),
                         const SizedBox(height: 8),
                         Row(
