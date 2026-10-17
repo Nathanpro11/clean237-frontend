@@ -254,6 +254,8 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
             carte(Icons.groups_2_outlined, '${stats.citoyensActifs}', 'Citoyens actifs'),
             carte(Icons.login, '${stats.connexionsAujourdHui}', "Connexions aujourd'hui"),
             carte(Icons.person_add_alt_1_outlined, '${stats.nouveauxInscrits7j}', 'Nouveaux inscrits (7 jours)'),
+            carte(Icons.warning_amber_outlined, '${stats.alertesActives}', 'Alertes actives'),
+            carte(Icons.check_circle_outline, '${stats.alertesTraitees}', 'Alertes traitées'),
           ],
         );
       },
