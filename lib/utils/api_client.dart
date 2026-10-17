@@ -23,6 +23,7 @@ class ApiClient {
   static String? _userId;
 
   static String? get userId => _userId;
+  static String? get token => _token;
 
   static void ouvrirSession({required String token, required String userId}) {
     _token = token;
