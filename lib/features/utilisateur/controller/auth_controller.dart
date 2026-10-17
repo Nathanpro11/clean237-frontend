@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/auth_repository.dart';
+import 'package:clean237_frontend/utils/api_client.dart';
 import 'package:clean237_frontend/utils/jwt_helper.dart';
 
 class AuthController extends ChangeNotifier {
@@ -113,25 +114,31 @@ class AuthController extends ChangeNotifier {
     return resultat.succes;
   }
 
-  /// Flux "mot de passe oublié", indépendant de toute session active.
-  Future<bool> reinitialiserMotDePasse({
+  /// "Mot de passe oublié", étape 1 : envoie un code par e-mail.
+  /// Retourne null si tout va bien, sinon le message d'erreur à afficher.
+  /// N'affecte pas l'état de l'écran de connexion (le dialogue gère son propre état).
+  Future<String?> demanderCodeReinitialisation(String email) async {
+    final resultat = await _repository.demanderCodeReinitialisation(email: email);
+    return resultat.succes ? null : (resultat.messageErreur ?? "Impossible d'envoyer le code.");
+  }
+
+  /// "Mot de passe oublié", étape 2 : code reçu + nouveau mot de passe.
+  /// Retourne null si le mot de passe a été réinitialisé, sinon le message d'erreur.
+  Future<String?> confirmerReinitialisation({
     required String email,
+    required String code,
     required String nouveauMotDePasse,
   }) async {
-    _setChargement(true);
-    _messageErreur = null;
-
-    final resultat = await _repository.reinitialiserMotDePasse(
+    final resultat = await _repository.confirmerReinitialisation(
       email: email,
+      code: code,
       nouveauMotDePasse: nouveauMotDePasse,
     );
-
-    _messageErreur = resultat.messageErreur;
-    _setChargement(false);
-    return resultat.succes;
+    return resultat.succes ? null : (resultat.messageErreur ?? 'La réinitialisation a échoué.');
   }
 
   void logout() {
+    ApiClient.fermerSession();
     _utilisateurConnecte = null;
     _tokenJwt = null;
     _role = null;
