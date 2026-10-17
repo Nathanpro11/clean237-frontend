@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:clean237_frontend/utils/api_client.dart' as user;
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/utils/constances/api_constants.dart';
+import 'package:clean237_frontend/data/repositories/admin_repository.dart' as admin;
+import 'package:clean237_frontend/data/services/admin_api_data_source.dart' as admin;
+import 'package:clean237_frontend/data/services/admin_mock_data_source.dart' as admin;
+import 'package:clean237_frontend/data/services/admin_remote_data_source.dart' as admin;
+import 'package:clean237_frontend/data/services/api_client.dart' as admin;
 import 'package:clean237_frontend/features/utilisateur/controller/admin_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/agent_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
@@ -28,6 +37,7 @@ const bool kModeHorsLigne = bool.fromEnvironment('OFFLINE');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('fr');
 
   final AuthRepository authRepo;
   final AdminRepository adminRepo;
@@ -49,6 +59,15 @@ void main() async {
     citoyenRepo = ApiCitoyenRepository();
   }
 
+  // Module administration (zones, alertes, analyses, rapports).
+  // Le jeton vient de la session ouverte par le module utilisateurs.
+  final admin.AdminRemoteDataSource sourceAdmin =
+      (kModeHorsLigne || ApiConstants.useMockApi)
+          ? admin.AdminMockDataSource()
+          : admin.AdminApiDataSource(
+              client: admin.ApiClient(tokenProvider: () async => user.ApiClient.token),
+            );
+
   runApp(
     MultiProvider(
       providers: [
@@ -58,6 +77,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AgentController(agentRepo)),
         ChangeNotifierProvider(create: (_) => CitoyenController(citoyenRepo)),
         ChangeNotifierProvider(create: (_) => ParametresController(SharedPrefsParametresRepository())),
+        RepositoryProvider<admin.AdminRepository>(
+          create: (_) => admin.AdminRepository(dataSource: sourceAdmin),
+        ),
       ],
       child: const Clean237App(),
     ),
