@@ -1,5 +1,5 @@
 // ⚠️ CE FICHIER VA DANS : lib/features/utilisateur/repository/auth_repository.dart
-// Contient AuthResult + l'interface AuthRepository (connexion/inscription/profil).
+// Contient AuthResult + l'interface AuthRepository (connexion/inscription/profil/réinitialisation).
 // NE PAS CONFONDRE avec admin_repository.dart (StatsAdmin + AdminRepository).
 
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
@@ -43,10 +43,14 @@ abstract class AuthRepository {
     required String nouveauMotDePasse,
   });
 
-  /// Flux "mot de passe oublié" : réinitialise directement le mot de passe
-  /// du compte correspondant à [email], sans exiger l'ancien.
-  Future<AuthResult> reinitialiserMotDePasse({
+  /// Étape 1 du "mot de passe oublié" : le serveur envoie un code par e-mail
+  /// (réponse identique que le compte existe ou non).
+  Future<AuthResult> demanderCodeReinitialisation({required String email});
+
+  /// Étape 2 : valide le code reçu et définit le nouveau mot de passe.
+  Future<AuthResult> confirmerReinitialisation({
     required String email,
+    required String code,
     required String nouveauMotDePasse,
   });
 }
