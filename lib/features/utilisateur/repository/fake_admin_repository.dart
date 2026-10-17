@@ -2,8 +2,8 @@ import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 
-/// Implémentation FACTICE d'AdminRepository. Les comptes viennent du même
-/// UtilisateursStore que FakeAuthRepository : rien n'est dupliqué ni désynchronisé.
+/// Implémentation FACTICE d'AdminRepository (mode hors ligne). Les comptes viennent du
+/// même UtilisateursStore que FakeAuthRepository : rien n'est dupliqué ni désynchronisé.
 class FakeAdminRepository implements AdminRepository {
   final UtilisateursStore _store;
 
@@ -12,16 +12,16 @@ class FakeAdminRepository implements AdminRepository {
   @override
   Future<StatsAdmin> chargerStats() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return const StatsAdmin(
-      plaintesActives: 142,
-      camionsActifs: 18,
-      alertesCritiques: 5,
-      trimestres: ['T1', 'T2', 'T3', 'T4'],
-      tendanceParQuartier: {
-        'Biyem-Assi': [32, 41, 38, 52],
-        'Mendong': [21, 27, 35, 31],
-        'Efoulan': [14, 19, 22, 29],
-      },
+    final tous = _store.listerTous();
+    final actifs = tous.where((u) => u.estActif).toList();
+
+    return StatsAdmin(
+      totalComptes: tous.length,
+      comptesActifs: actifs.length,
+      citoyensActifs: actifs.where((u) => u.roleNom == 'citoyen').length,
+      agentsActifs: actifs.where((u) => u.roleNom == 'agent').length,
+      connexionsAujourdHui: 0,
+      nouveauxInscrits7j: 0,
     );
   }
 
