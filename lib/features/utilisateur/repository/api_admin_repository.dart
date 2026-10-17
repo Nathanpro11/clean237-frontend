@@ -17,6 +17,8 @@ class ApiAdminRepository implements AdminRepository {
       agentsActifs: n('agentsActifs'),
       connexionsAujourdHui: n('connexionsAujourdhui'),
       nouveauxInscrits7j: n('nouveauxInscrits7j'),
+      alertesActives: n('alertesActives'),
+      alertesTraitees: n('alertesTraitees'),
     );
   }
 
