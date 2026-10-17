@@ -7,6 +7,9 @@ import 'package:clean237_frontend/features/utilisateur/controller/auth_controlle
 import 'package:clean237_frontend/features/utilisateur/widgets/auth_toggle_tabs.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/connexion_screen.dart';
 
+/// Inscription PUBLIQUE : crée un compte citoyen.
+/// Les comptes agent / admin sont créés par un administrateur
+/// (Gestion des comptes > Créer un compte).
 class InscriptionScreen extends StatefulWidget {
   const InscriptionScreen({super.key});
 
@@ -16,7 +19,6 @@ class InscriptionScreen extends StatefulWidget {
 
 class _InscriptionScreenState extends State<InscriptionScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
-  String _profilSelectionne = 'citoyen';
   bool _masquerMotDePasse = true;
 
   // Numéro mobile camerounais : préfixe +237/237 optionnel, puis 6 et 8 chiffres.
@@ -31,7 +33,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
     if (valeurs['conditions'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Veuillez accepter les Conditions d\'utilisation'),
+          content: Text("Veuillez accepter les Conditions d'utilisation"),
           backgroundColor: CleanCouleurs.rougeAlerte,
         ),
       );
@@ -46,18 +48,15 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
       email: (valeurs['email'] as String).trim().toLowerCase(),
       telephone: telephoneNettoye,
       motDepasse: valeurs['motDepasse'] as String,
-      profil: _profilSelectionne,
-      matricule: _profilSelectionne == 'agent' ? (valeurs['matricule'] as String?)?.trim() : null,
-      zoneAffectee: _profilSelectionne == 'agent' ? (valeurs['zone'] as String?)?.trim() : null,
+      profil: 'citoyen',
     );
 
     if (succes && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Compte créé avec succès !'), backgroundColor: CleanCouleurs.vertEco),
       );
-      // Les onglets Connexion/Inscription utilisent pushReplacement, donc cet
-      // écran est seul dans la pile : Navigator.pop() planterait. On revient
-      // explicitement vers l'écran de connexion.
+      // Les onglets Connexion/Inscription utilisent pushReplacement : cet écran est
+      // seul dans la pile, on revient explicitement vers la connexion.
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const ConnexionScreen()),
       );
@@ -106,16 +105,27 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                         const SizedBox(width: 10),
                         const Text(
                           'Clean237',
-                          style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.3),
+                          style: TextStyle(
+                            color: CleanCouleurs.anthracite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.3,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
                     const AuthToggleTabs(estConnexionActive: false),
                     const SizedBox(height: 24),
-                    const Text('Inscription', style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 28, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Inscription',
+                      style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 28, fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 6),
-                    const Text('Rejoignez-nous pour un espace étincelant.', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                    const Text(
+                      'Rejoignez-nous pour un espace étincelant.',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
                     const SizedBox(height: 30),
 
                     _buildLabel('Nom complet'),
@@ -158,36 +168,6 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    _buildLabel('Type de Profil'),
-                    FormBuilderDropdown<String>(
-                      name: 'profil',
-                      initialValue: _profilSelectionne,
-                      decoration: _buildInputDecoration('', Icons.assignment_ind_outlined),
-                      items: const [
-                        DropdownMenuItem(value: 'citoyen', child: Text('Citoyen Standard')),
-                        DropdownMenuItem(value: 'agent', child: Text('Agent de Collecte Terrain')),
-                      ],
-                      onChanged: (val) => setState(() => _profilSelectionne = val ?? 'citoyen'),
-                    ),
-                    const SizedBox(height: 18),
-
-                    if (_profilSelectionne == 'agent') ...[
-                      _buildLabel('Matricule Professionnel'),
-                      FormBuilderTextField(
-                        name: 'matricule',
-                        decoration: _buildInputDecoration('Ex: AGT-237-001', Icons.badge_outlined),
-                        validator: FormBuilderValidators.required(errorText: 'Requis'),
-                      ),
-                      const SizedBox(height: 18),
-                      _buildLabel('Zone d\'affectation'),
-                      FormBuilderTextField(
-                        name: 'zone',
-                        decoration: _buildInputDecoration('Ex: Yaoundé VI', Icons.map_outlined),
-                        validator: FormBuilderValidators.required(errorText: 'Requis'),
-                      ),
-                      const SizedBox(height: 18),
-                    ],
-
                     _buildLabel('Mot de passe'),
                     FormBuilderTextField(
                       name: 'motDepasse',
@@ -217,7 +197,7 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                       initialValue: false,
                       activeColor: CleanCouleurs.vertEco,
                       title: const Text(
-                        'J\'accepte les Conditions d\'utilisation',
+                        "J'accepte les Conditions d'utilisation",
                         style: TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ),
@@ -232,8 +212,15 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
                         elevation: 0,
                       ),
                       child: authCtrl.estEnCoursDeChargement
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('S\'inscrire', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text(
+                              "S'inscrire",
+                              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -248,7 +235,10 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
 
   Widget _buildLabel(String txt) => Padding(
         padding: const EdgeInsets.only(bottom: 6.0),
-        child: Text(txt, style: const TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.w600, fontSize: 14)),
+        child: Text(
+          txt,
+          style: const TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.w600, fontSize: 14),
+        ),
       );
 
   InputDecoration _buildInputDecoration(String hint, IconData prefix, {bool avecSuffix = false}) {
@@ -257,13 +247,23 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
       prefixIcon: Icon(prefix, color: CleanCouleurs.vertEco, size: 20),
       suffixIcon: avecSuffix
           ? IconButton(
-              icon: Icon(_masquerMotDePasse ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey, size: 20),
+              icon: Icon(
+                _masquerMotDePasse ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                color: Colors.grey,
+                size: 20,
+              ),
               onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse),
             )
           : null,
       contentPadding: const EdgeInsets.symmetric(vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CleanCouleurs.vertEco, width: 1.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: CleanCouleurs.vertEco, width: 1.5),
+      ),
     );
   }
 }
