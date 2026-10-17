@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:clean237_frontend/common/navigator/app_routes.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/admin_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/admin_module_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/admin_utilisateurs_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
@@ -42,6 +44,12 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
   Future<void> _charger() async {
     await Future<void>.delayed(Duration.zero);
     if (mounted) await context.read<AdminController>().chargerTableauDeBord();
+  }
+
+  void _ouvrirModule(String route) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => AdminModuleScreen(routeInitiale: route)),
+    );
   }
 
   @override
@@ -179,6 +187,38 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
                   elevation: 0,
                 ),
               ),
+              const SizedBox(height: 28),
+              const Text(
+                'Supervision environnementale',
+                style: TextStyle(color: _vertForet, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _BoutonModule(
+                    icone: Icons.map_outlined,
+                    libelle: 'Zones',
+                    onTap: () => _ouvrirModule(AppRoutes.zones),
+                  ),
+                  _BoutonModule(
+                    icone: Icons.warning_amber_outlined,
+                    libelle: 'Alertes',
+                    onTap: () => _ouvrirModule(AppRoutes.alerts),
+                  ),
+                  _BoutonModule(
+                    icone: Icons.analytics_outlined,
+                    libelle: 'Analyses',
+                    onTap: () => _ouvrirModule(AppRoutes.newAnalysis()),
+                  ),
+                  _BoutonModule(
+                    icone: Icons.description_outlined,
+                    libelle: 'Rapports',
+                    onTap: () => _ouvrirModule(AppRoutes.reports),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -241,6 +281,31 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BoutonModule extends StatelessWidget {
+  final IconData icone;
+  final String libelle;
+  final VoidCallback onTap;
+
+  const _BoutonModule({required this.icone, required this.libelle, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icone, color: CleanCouleurs.vertEco, size: 20),
+      label: Text(
+        libelle,
+        style: const TextStyle(color: _vertForet, fontWeight: FontWeight.bold),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: CleanCouleurs.vertEco),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     );
   }
