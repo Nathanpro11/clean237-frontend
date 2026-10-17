@@ -1,3 +1,5 @@
+
+
 class UtilisateurModel {
   final String id;
   final String nom;
@@ -21,9 +23,12 @@ class UtilisateurModel {
     required this.estActif,
   });
 
-  // Désérialisation du flux JSON envoyé par votre backend Node.js (port 3000)
+  /// Désérialisation du JSON du backend Node.js. `roleId` est normalement peuplé
+  /// ({nom, permissionsIds}) ; s'il est absent ou non peuplé, on retombe sur "citoyen".
   factory UtilisateurModel.fromJson(Map<String, dynamic> json) {
-    final roleData = json['roleId'] as Map<String, dynamic>? ?? {};
+    final roleData = json['roleId'] is Map<String, dynamic>
+        ? json['roleId'] as Map<String, dynamic>
+        : <String, dynamic>{};
     final roleName = roleData['nom'] as String? ?? 'citoyen';
 
     final permissionsList = (roleData['permissionsIds'] as List? ?? [])
@@ -44,8 +49,7 @@ class UtilisateurModel {
     );
   }
 
-  /// Sérialisation au même format que fromJson() attend, utilisée pour
-  /// la persistance locale (SharedPreferences) en mode sans backend.
+  /// Sérialisation au même format que fromJson() (persistance locale du mode hors ligne).
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
