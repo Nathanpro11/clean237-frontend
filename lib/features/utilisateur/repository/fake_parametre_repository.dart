@@ -25,3 +25,4 @@ class FakeParametresRepository implements ParametresRepository {
     // Rien à vider en mode mock : simule juste le délai de l'opération.
   }
 }
+
