@@ -31,3 +31,4 @@ abstract class ParametresRepository {
   Future<void> enregistrerPreferences(PreferencesModel preferences);
   Future<void> viderCache();
 }
+
