@@ -57,3 +57,4 @@ class AuthToggleTabs extends StatelessWidget {
     );
   }
 }
+
