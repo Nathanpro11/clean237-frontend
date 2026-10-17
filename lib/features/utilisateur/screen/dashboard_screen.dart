@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/utils/format_utils.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/controller/agent_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/models/agent_stats_model.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 
-/// Tableau de bord de l'Agent de terrain. Pure View : aucune donnée codée
-/// en dur, tout vient d'AgentController (ViewModel). Protégé par GardeAcces
-/// (rôle agent uniquement — les anciennes sections Admin/Citoyen de cet
-/// écran n'étaient jamais atteintes, elles ont été retirées).
+/// Tableau de bord de l'Agent de terrain. Pure View : tout vient d'AgentController (ViewModel),
+/// donc du backend. Les missions et collectes seront ajoutées avec leur module.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -37,10 +37,9 @@ class _DashboardContenuState extends State<_DashboardContenu> {
     _charger();
   }
 
-  void _charger() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<AgentController>().chargerStats();
-    });
+  Future<void> _charger() async {
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) await context.read<AgentController>().chargerStats();
   }
 
   @override
@@ -63,7 +62,10 @@ class _DashboardContenuState extends State<_DashboardContenu> {
               child: Image.asset('assets/logo.jpeg', width: 28, height: 28, fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
-            const Text('Clean237', style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 15, fontWeight: FontWeight.bold)),
+            const Text(
+              'Clean237',
+              style: TextStyle(color: CleanCouleurs.anthracite, fontSize: 15, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         actions: [
@@ -104,7 +106,11 @@ class _DashboardContenuState extends State<_DashboardContenu> {
                 children: [
                   Icon(Icons.wifi_off_outlined, size: 40, color: Colors.grey.shade400),
                   const SizedBox(height: 12),
-                  Text(ctrl.messageErreur ?? 'Aucune donnée disponible.', style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    ctrl.messageErreur ?? 'Aucune donnée disponible.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _charger,
@@ -117,26 +123,86 @@ class _DashboardContenuState extends State<_DashboardContenu> {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildTitreSection('FIELD AGENT VIEW'),
-        const SizedBox(height: 10),
-        _buildStatsAgent(stats.missionsAujourdHui, stats.collectesTerminees),
-        const SizedBox(height: 14),
-        _buildSecteurAgent(stats.secteurAffecte),
-      ],
+    return RefreshIndicator(
+      color: CleanCouleurs.vertEco,
+      onRefresh: _charger,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildTitreSection('ESPACE AGENT DE TERRAIN'),
+          const SizedBox(height: 10),
+          _buildSecteurAgent(stats),
+          const SizedBox(height: 14),
+          _buildStatsAgent(stats),
+          const SizedBox(height: 14),
+          _buildInfoMissions(),
+        ],
+      ),
     );
   }
 
   Widget _buildTitreSection(String titre) {
     return Text(
       titre,
-      style: const TextStyle(color: CleanCouleurs.vertEco, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+      style: const TextStyle(
+        color: CleanCouleurs.vertEco,
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
+      ),
     );
   }
 
-  Widget _buildStatsAgent(int missions, int collectes) {
+  Widget _buildSecteurAgent(AgentStatsModel stats) {
+    final secteur = stats.secteurAffecte;
+    final aSecteur = secteur != null && secteur.trim().isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: CleanCouleurs.vertEco.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on, color: CleanCouleurs.vertEco, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  aSecteur ? 'Secteur : ${capitaliserMots(secteur)}' : 'Aucun secteur assigné',
+                  style: const TextStyle(
+                    color: CleanCouleurs.anthracite,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (stats.matricule != null && stats.matricule!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.badge_outlined, color: CleanCouleurs.vertEco, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Matricule : ${stats.matricule}',
+                  style: const TextStyle(color: CleanCouleurs.anthracite, fontSize: 13),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsAgent(AgentStatsModel stats) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -144,46 +210,60 @@ class _DashboardContenuState extends State<_DashboardContenu> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Missions aujourd\'hui', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                const SizedBox(height: 4),
-                Text('$missions', style: const TextStyle(color: CleanCouleurs.anthracite, fontSize: 22, fontWeight: FontWeight.bold)),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _chiffre("Connexions aujourd'hui", '${stats.connexionsAujourdHui}', CleanCouleurs.anthracite),
+              ),
+              Expanded(
+                child: _chiffre('Actions enregistrées', '${stats.actionsEnregistrees}', CleanCouleurs.vertEco),
+              ),
+            ],
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Collectes terminées', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                const SizedBox(height: 4),
-                Text('$collectes', style: const TextStyle(color: CleanCouleurs.vertEco, fontSize: 22, fontWeight: FontWeight.bold)),
-              ],
-            ),
+          const SizedBox(height: 12),
+          Text(
+            stats.connexionPrecedente != null
+                ? 'Connexion précédente : ${formaterDateHeure(stats.connexionPrecedente!)}'
+                : 'Première connexion',
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSecteurAgent(String secteur) {
+  Widget _chiffre(String libelle, String valeur, Color couleur) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(libelle, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+        const SizedBox(height: 4),
+        Text(valeur, style: TextStyle(color: couleur, fontSize: 22, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildInfoMissions() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: CleanCouleurs.vertEco.withOpacity(0.06),
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.location_on, color: CleanCouleurs.vertEco, size: 18),
-          const SizedBox(width: 8),
+          Icon(Icons.info_outline, color: Colors.grey, size: 18),
+          SizedBox(width: 8),
           Expanded(
-            child: Text('Secteur: $secteur', style: const TextStyle(color: CleanCouleurs.anthracite, fontSize: 13, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Vos missions et collectes du jour seront affichées ici dès que le module missions sera activé.',
+              style: TextStyle(color: Colors.grey, fontSize: 12, height: 1.4),
+            ),
           ),
         ],
       ),
