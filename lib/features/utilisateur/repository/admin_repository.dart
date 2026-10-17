@@ -12,6 +12,8 @@ class StatsAdmin {
   final int agentsActifs;
   final int connexionsAujourdHui;
   final int nouveauxInscrits7j;
+  final int alertesActives;
+  final int alertesTraitees;
 
   const StatsAdmin({
     required this.totalComptes,
@@ -20,6 +22,8 @@ class StatsAdmin {
     required this.agentsActifs,
     required this.connexionsAujourdHui,
     required this.nouveauxInscrits7j,
+    this.alertesActives = 0,
+    this.alertesTraitees = 0,
   });
 }
 
