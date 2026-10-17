@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
+import 'package:clean237_frontend/utils/api_client.dart';
 
 class AdminController extends ChangeNotifier {
   final AdminRepository _repository;
@@ -17,6 +18,10 @@ class AdminController extends ChangeNotifier {
   bool get enChargement => _enChargement;
   String? get messageErreur => _messageErreur;
 
+  /// Message du serveur si disponible, sinon [parDefaut].
+  String _message(Object e, String parDefaut) =>
+      e is ApiException ? e.message : parDefaut;
+
   Future<void> chargerTableauDeBord() async {
     _enChargement = true;
     _messageErreur = null;
@@ -24,8 +29,8 @@ class AdminController extends ChangeNotifier {
 
     try {
       _stats = await _repository.chargerStats();
-    } catch (_) {
-      _messageErreur = 'Impossible de charger les statistiques.';
+    } catch (e) {
+      _messageErreur = _message(e, 'Impossible de charger les statistiques.');
     }
 
     _enChargement = false;
@@ -39,8 +44,8 @@ class AdminController extends ChangeNotifier {
 
     try {
       _utilisateurs = await _repository.chargerUtilisateurs();
-    } catch (_) {
-      _messageErreur = 'Impossible de charger les comptes.';
+    } catch (e) {
+      _messageErreur = _message(e, 'Impossible de charger les comptes.');
     }
 
     _enChargement = false;
@@ -64,8 +69,8 @@ class AdminController extends ChangeNotifier {
       _utilisateurs = _utilisateurs.map((u) => u.id == id ? modifie : u).toList();
       notifyListeners();
       return true;
-    } catch (_) {
-      _messageErreur = 'La mise à jour a échoué.';
+    } catch (e) {
+      _messageErreur = _message(e, 'La mise à jour a échoué.');
       notifyListeners();
       return false;
     }
@@ -96,7 +101,7 @@ class AdminController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _messageErreur = e.toString().replaceFirst('Exception: ', '');
+      _messageErreur = _message(e, e.toString().replaceFirst('Exception: ', ''));
       notifyListeners();
       return false;
     }
@@ -104,8 +109,7 @@ class AdminController extends ChangeNotifier {
 
   /// Point d'entrée pour le dialogue de création de compte admin : reçoit
   /// les valeurs BRUTES du formulaire (FormBuilder) et le rôle sélectionné,
-  /// fait tout le nettoyage/mapping ici (nettoyage du téléphone, trim,
-  /// matricule/zone uniquement si agent), pas dans la View.
+  /// fait tout le nettoyage/mapping ici (téléphone, trim, matricule/zone si agent).
   Future<bool> soumettreCreationCompte(Map<String, dynamic> valeursFormulaire, String role) {
     final telephoneNettoye =
         (valeursFormulaire['telephone'] as String).replaceAll(RegExp(r'[\s-]'), '');
