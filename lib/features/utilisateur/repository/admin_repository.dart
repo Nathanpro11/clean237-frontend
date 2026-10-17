@@ -4,24 +4,27 @@
 
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 
+/// Statistiques RÉELLES de supervision (calculées en base par le backend).
 class StatsAdmin {
-  final int plaintesActives;
-  final int camionsActifs;
-  final int alertesCritiques;
-  final List<String> trimestres;
-  final Map<String, List<double>> tendanceParQuartier;
+  final int totalComptes;
+  final int comptesActifs;
+  final int citoyensActifs;
+  final int agentsActifs;
+  final int connexionsAujourdHui;
+  final int nouveauxInscrits7j;
 
   const StatsAdmin({
-    required this.plaintesActives,
-    required this.camionsActifs,
-    required this.alertesCritiques,
-    required this.trimestres,
-    required this.tendanceParQuartier,
+    required this.totalComptes,
+    required this.comptesActifs,
+    required this.citoyensActifs,
+    required this.agentsActifs,
+    required this.connexionsAujourdHui,
+    required this.nouveauxInscrits7j,
   });
 }
 
 /// Contrat de la supervision municipale (Super-Admin).
-/// FakeAdminRepository maintenant, ApiAdminRepository quand le backend sera prêt.
+/// FakeAdminRepository (hors ligne) ou ApiAdminRepository (backend).
 abstract class AdminRepository {
   Future<StatsAdmin> chargerStats();
 
