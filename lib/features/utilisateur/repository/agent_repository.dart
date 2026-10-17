@@ -4,3 +4,4 @@ import 'package:clean237_frontend/features/utilisateur/models/agent_stats_model.
 abstract class AgentRepository {
   Future<AgentStatsModel> chargerStats();
 }
+
