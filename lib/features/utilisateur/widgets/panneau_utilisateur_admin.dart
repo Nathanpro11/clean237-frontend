@@ -18,8 +18,9 @@ String libelleRoleAdmin(String role) {
   }
 }
 
-/// Panneau latéral droit (RBAC) : suppression logique, rôle, permissions
-/// et empreinte d'audit. À ouvrir avec showGeneralDialog + SlideTransition.
+/// Panneau latéral droit (RBAC) : activation du compte, rôle, permissions du rôle
+/// (lecture seule : elles appartiennent au rôle, pas à l'utilisateur) et trace d'audit.
+/// À ouvrir avec showGeneralDialog + SlideTransition.
 class PanneauUtilisateurAdmin extends StatefulWidget {
   final UtilisateurModel utilisateur;
 
@@ -32,17 +33,8 @@ class PanneauUtilisateurAdmin extends StatefulWidget {
 class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
   static const List<String> _rolesDisponibles = ['citoyen', 'agent', 'admin'];
 
-  static const List<String> _permissionsSysteme = [
-    'creer_utilisateur',
-    'modifier_utilisateur',
-    'supprimer_utilisateur',
-    'creer_role',
-    'consulter_logs',
-  ];
-
   late bool _estActif;
   late String _roleNom;
-  late Set<String> _permissions;
   late Future<String> _futureIp;
   bool _enregistrement = false;
 
@@ -52,18 +44,7 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
     final u = widget.utilisateur;
     _estActif = u.estActif;
     _roleNom = _rolesDisponibles.contains(u.roleNom) ? u.roleNom : 'citoyen';
-    _permissions = u.permissions.toSet();
     _futureIp = context.read<AdminController>().dernierIpAudite(u.id);
-  }
-
-  void _basculerPermission(String permission, bool? valeur) {
-    setState(() {
-      if (valeur == true) {
-        _permissions.add(permission);
-      } else {
-        _permissions.remove(permission);
-      }
-    });
   }
 
   Future<void> _enregistrer() async {
@@ -77,7 +58,6 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
       id: widget.utilisateur.id,
       estActif: _estActif,
       roleNom: _roleNom,
-      permissions: _permissions.toList(),
     );
 
     navigateur.pop();
@@ -97,8 +77,6 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
   Widget build(BuildContext context) {
     final largeurEcran = MediaQuery.of(context).size.width;
     final largeurPanneau = math.min(420.0, largeurEcran * 0.92);
-    final deuxColonnes = largeurPanneau >= 380;
-    final largeurTuile = deuxColonnes ? (largeurPanneau - 40 - 8) / 2 : largeurPanneau - 40;
 
     return Material(
       color: CleanCouleurs.blancPur,
@@ -122,15 +100,9 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
                       const SizedBox(height: 8),
                       _buildSelecteurRole(),
                       const SizedBox(height: 24),
-                      _buildTitre('Permissions techniques'),
+                      _buildTitre('Permissions du rôle actuel (lecture seule)'),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: _permissionsSysteme
-                            .map((p) => _buildTuilePermission(p, largeurTuile))
-                            .toList(),
-                      ),
+                      _buildPermissionsLectureSeule(),
                       const SizedBox(height: 24),
                       _buildCarteTracabilite(),
                     ],
@@ -279,32 +251,25 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
     );
   }
 
-  Widget _buildTuilePermission(String permission, double largeur) {
-    final active = _permissions.contains(permission);
+  Widget _buildPermissionsLectureSeule() {
+    final permissions = widget.utilisateur.permissions;
+    if (permissions.isEmpty) {
+      return const Text('Aucune permission.', style: TextStyle(color: Colors.grey, fontSize: 12));
+    }
 
-    return SizedBox(
-      width: largeur,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () => _basculerPermission(permission, !active),
-        child: Row(
-          children: [
-            Checkbox(
-              value: active,
-              activeColor: CleanCouleurs.vertEco,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: permissions
+          .map(
+            (p) => Chip(
+              label: Text(p, style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: _vertForet)),
               visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onChanged: (valeur) => _basculerPermission(permission, valeur),
+              backgroundColor: CleanCouleurs.grisFond,
+              side: BorderSide(color: Colors.grey.shade300),
             ),
-            Expanded(
-              child: Text(
-                permission,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: _vertForet),
-              ),
-            ),
-          ],
-        ),
-      ),
+          )
+          .toList(),
     );
   }
 
@@ -325,11 +290,14 @@ class _PanneauUtilisateurAdminState extends State<PanneauUtilisateurAdmin> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('TRACE D\'AUDIT', style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.white54)),
+              const Text(
+                "TRACE D'AUDIT",
+                style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.white54),
+              ),
               const SizedBox(height: 6),
               Text('user_id: ${widget.utilisateur.id}', style: style),
               const Text('action: mutation_privileges', style: style),
-              Text('🌐 Audited Network IP: $ip', style: style),
+              Text('Dernière IP auditée: $ip', style: style),
             ],
           );
         },
