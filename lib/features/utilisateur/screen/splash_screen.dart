@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../utils/constances/constances.dart';
+import 'package:provider/provider.dart';
+import 'package:clean237_frontend/features/utilisateur/controller/auth_controller.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/accueil_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/dashboard_screen.dart';
+import 'package:clean237_frontend/features/utilisateur/screen/admin_dashboard_screen.dart';
 import 'connexion_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,12 +23,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
   // 🎯 EXPÉRIENCE UTILISATEUR & NAVIGATION : Initialisation et redirection fluide (3 secondes)
   void _initialiserSessionEtNaviguer() async {
-    await Future.delayed(const Duration(seconds: 3));
+    final auth = context.read<AuthController>();
+    final resultats = await Future.wait([
+      Future.delayed(const Duration(seconds: 3)),
+      auth.restaurerSession(),
+    ]);
     if (!mounted) return;
 
-    // Redirection définitive (pushReplacement) vers l'écran de connexion
+    final Widget ecran = resultats[1] == true
+        ? switch (auth.role ?? 'citoyen') {
+            'admin' => const AdminDashboardScreen(),
+            'agent' => const DashboardScreen(),
+            _ => const AccueilScreen(),
+          }
+        : const ConnexionScreen();
+
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const ConnexionScreen()),
+      MaterialPageRoute(builder: (context) => ecran),
     );
   }
 
