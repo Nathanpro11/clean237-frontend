@@ -12,13 +12,12 @@ const Color _vertForet = Color(0xFF14532D);
 const Color _cramoisi = Color(0xFFDC143C);
 
 /// Centre de supervision du Super-Admin (Mairie de Yaoundé VI).
-/// Affiché après connexion quand le rôle lu dans le JWT est "admin".
+/// Indicateurs RÉELS calculés par le backend (comptes + journal d'audit).
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Connexion obligatoire + rôle admin, sinon l'écran n'est jamais construit.
     return const GardeAcces(
       rolesAutorises: ['admin'],
       child: _AdminDashboardContenu(),
@@ -37,9 +36,12 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<AdminController>().chargerTableauDeBord();
-    });
+    _charger();
+  }
+
+  Future<void> _charger() async {
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) await context.read<AdminController>().chargerTableauDeBord();
   }
 
   @override
@@ -65,10 +67,14 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
                               children: [
                                 Icon(Icons.wifi_off_outlined, size: 40, color: Colors.grey.shade400),
                                 const SizedBox(height: 12),
-                                Text(admin.messageErreur ?? 'Aucune donnée disponible.', style: const TextStyle(color: Colors.grey)),
+                                Text(
+                                  admin.messageErreur ?? 'Aucune donnée disponible.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
                                 const SizedBox(height: 16),
                                 OutlinedButton.icon(
-                                  onPressed: () => context.read<AdminController>().chargerTableauDeBord(),
+                                  onPressed: _charger,
                                   icon: const Icon(Icons.refresh, color: CleanCouleurs.vertEco, size: 18),
                                   label: const Text('Réessayer', style: TextStyle(color: CleanCouleurs.vertEco)),
                                   style: OutlinedButton.styleFrom(side: const BorderSide(color: CleanCouleurs.vertEco)),
@@ -76,7 +82,11 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
                               ],
                             ),
                     )
-                  : _buildContenu(stats),
+                  : RefreshIndicator(
+                      color: CleanCouleurs.vertEco,
+                      onRefresh: _charger,
+                      child: _buildContenu(stats),
+                    ),
             ),
           ],
         ),
@@ -129,6 +139,7 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
 
   Widget _buildContenu(StatsAdmin stats) {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       child: Center(
         child: ConstrainedBox(
@@ -147,6 +158,8 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
               ),
               const SizedBox(height: 24),
               _buildCartesScore(stats),
+              const SizedBox(height: 16),
+              _buildInfoModules(),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () {
@@ -180,69 +193,80 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
         final colonnes = contraintes.maxWidth >= 640 ? 3 : 1;
         final largeurCarte = (contraintes.maxWidth - espace * (colonnes - 1)) / colonnes;
 
+        Widget carte(IconData icone, String valeur, String libelle, {String? sousTitre}) {
+          return SizedBox(
+            width: largeurCarte,
+            child: _CarteScore(icone: icone, valeur: valeur, libelle: libelle, sousTitre: sousTitre),
+          );
+        }
+
         return Wrap(
           spacing: espace,
           runSpacing: espace,
           children: [
-            SizedBox(
-              width: largeurCarte,
-              child: _CarteScore(
-                icone: Icons.analytics_outlined,
-                valeur: '${stats.plaintesActives}',
-                libelle: 'Plaintes urbaines actives',
-              ),
+            carte(
+              Icons.people_alt_outlined,
+              '${stats.comptesActifs}',
+              'Comptes actifs',
+              sousTitre: 'sur ${stats.totalComptes} comptes au total',
             ),
-            SizedBox(
-              width: largeurCarte,
-              child: _CarteScore(
-                icone: Icons.local_shipping_outlined,
-                valeur: '${stats.camionsActifs}',
-                libelle: 'Camions actifs sur le terrain',
-              ),
-            ),
-            SizedBox(
-              width: largeurCarte,
-              child: _CarteScore(
-                icone: Icons.warning_amber_rounded,
-                valeur: '${stats.alertesCritiques}',
-                libelle: 'Alertes critiques d\'assainissement',
-                critique: true,
-              ),
-            ),
+            carte(Icons.local_shipping_outlined, '${stats.agentsActifs}', 'Agents de terrain actifs'),
+            carte(Icons.groups_2_outlined, '${stats.citoyensActifs}', 'Citoyens actifs'),
+            carte(Icons.login, '${stats.connexionsAujourdHui}', "Connexions aujourd'hui"),
+            carte(Icons.person_add_alt_1_outlined, '${stats.nouveauxInscrits7j}', 'Nouveaux inscrits (7 jours)'),
           ],
         );
       },
     );
   }
 
+  Widget _buildInfoModules() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: Colors.grey, size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Les indicateurs de plaintes, de camions et d'alertes d'assainissement s'afficheront ici "
+              "dès l'activation des modules signalements et collectes.",
+              style: TextStyle(color: Colors.grey, fontSize: 12, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CarteScore extends StatelessWidget {
   final IconData icone;
   final String valeur;
   final String libelle;
-  final bool critique;
+  final String? sousTitre;
 
   const _CarteScore({
     required this.icone,
     required this.valeur,
     required this.libelle,
-    this.critique = false,
+    this.sousTitre,
   });
 
   @override
   Widget build(BuildContext context) {
-    final couleurAccent = critique ? CleanCouleurs.rougeAlerte : CleanCouleurs.vertEco;
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: critique ? CleanCouleurs.rougeAlerte.withAlpha(15) : CleanCouleurs.blancPur,
+        color: CleanCouleurs.blancPur,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: critique ? CleanCouleurs.rougeAlerte : Colors.grey.shade200,
-          width: critique ? 1.8 : 1,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -252,8 +276,8 @@ class _CarteScore extends StatelessWidget {
               children: [
                 Text(
                   valeur,
-                  style: TextStyle(
-                    color: critique ? CleanCouleurs.rougeAlerte : _vertForet,
+                  style: const TextStyle(
+                    color: _vertForet,
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
                     height: 1.1,
@@ -261,10 +285,14 @@ class _CarteScore extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(libelle, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                if (sousTitre != null) ...[
+                  const SizedBox(height: 2),
+                  Text(sousTitre!, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+                ],
               ],
             ),
           ),
-          Icon(icone, size: 36, color: couleurAccent),
+          Icon(icone, size: 36, color: CleanCouleurs.vertEco),
         ],
       ),
     );
