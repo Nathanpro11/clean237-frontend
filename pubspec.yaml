@@ -23,6 +23,7 @@ dependencies:
   # Formulaires et validations
   flutter_form_builder: ^9.7.0
   form_builder_validators: ^9.1.0 # <--- AJOUTÉ ICI POUR RÉSOUDRE L'ERREUR
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
