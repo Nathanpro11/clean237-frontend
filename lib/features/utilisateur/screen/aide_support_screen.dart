@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:clean237_frontend/utils/constances/constances.dart';
+import 'package:clean237_frontend/features/utilisateur/controller/profil_controller.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 
-/// Écran Aide & Support (module Utilisateur).
-/// FAQ dépliable + moyens de contact + formulaire de message.
+/// Écran Aide & Support : FAQ dépliable, contact et formulaire de message.
+/// Le message est réellement envoyé au backend (collection messages_support).
 class AideSupportScreen extends StatelessWidget {
   const AideSupportScreen({super.key});
 
@@ -16,7 +18,7 @@ class AideSupportScreen extends StatelessWidget {
 class _AideSupportContenu extends StatelessWidget {
   const _AideSupportContenu();
 
-  static const List<Map<String, String>> _faqMock = [
+  static const List<Map<String, String>> _faq = [
     {
       'question': 'Comment signaler un dépôt sauvage ?',
       'reponse': 'Depuis l\'écran d\'accueil, appuyez sur "Signaler un dépôt", prenez une photo et validez la localisation.',
@@ -31,7 +33,7 @@ class _AideSupportContenu extends StatelessWidget {
     },
     {
       'question': 'Comment devenir Agent de Collecte Terrain ?',
-      'reponse': 'Inscrivez-vous en sélectionnant "Agent de Collecte Terrain" lors de la création de compte, avec votre matricule professionnel.',
+      'reponse': 'Les comptes agents sont créés par un administrateur de la mairie. Contactez le support via le formulaire ci-dessous avec votre matricule professionnel.',
     },
   ];
 
@@ -70,24 +72,28 @@ class _AideSupportContenu extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
-                children: _faqMock
-                    .map((item) => ExpansionTile(
-                          title: Text(
-                            item['question']!,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: CleanCouleurs.anthracite),
-                          ),
-                          iconColor: CleanCouleurs.vertEco,
-                          collapsedIconColor: Colors.grey,
-                          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['reponse']!,
-                              style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                  children: _faq
+                      .map((item) => ExpansionTile(
+                            title: Text(
+                              item['question']!,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: CleanCouleurs.anthracite,
+                              ),
                             ),
-                          ],
-                        ))
-                    .toList(),
+                            iconColor: CleanCouleurs.vertEco,
+                            collapsedIconColor: Colors.grey,
+                            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['reponse']!,
+                                style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                              ),
+                            ],
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -108,20 +114,9 @@ class _AideSupportContenu extends StatelessWidget {
               type: MaterialType.transparency,
               borderRadius: BorderRadius.circular(14),
               clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.mail_outline, color: CleanCouleurs.vertEco),
-                    title: const Text('support@clean237.cm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Réponse sous 24h', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.phone_outlined, color: CleanCouleurs.vertEco),
-                    title: const Text('+237 6XX XX XX XX', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Lun-Ven, 8h-17h', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  ),
-                ],
+              child: const ListTile(
+                leading: Icon(Icons.mail_outline, color: CleanCouleurs.vertEco),
+                title: Text('support@clean237.cm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -146,45 +141,94 @@ class _AideSupportContenu extends StatelessWidget {
   void _ouvrirFormulaireMessage(BuildContext context) {
     final messageController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    bool enCours = false;
+    String? erreur;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Envoyer un message'),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: messageController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Décrivez votre problème ou votre question...',
-                border: OutlineInputBorder(),
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Message requis' : null,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.pop(dialogContext);
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialogue) {
+            Future<void> envoyer() async {
+              if (!formKey.currentState!.validate()) return;
+              setStateDialogue(() {
+                enCours = true;
+                erreur = null;
+              });
+
+              final err = await context.read<ProfilController>().envoyerMessageSupport(messageController.text);
+              if (!dialogContext.mounted) return;
+
+              if (err == null) {
+                Navigator.pop(dialogContext);
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Message envoyé ! Nous vous répondrons sous 24h.'),
+                      content: Text('Message envoyé au support.'),
                       backgroundColor: CleanCouleurs.vertEco,
                     ),
                   );
                 }
-              },
-              child: const Text('Envoyer', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+              } else {
+                setStateDialogue(() {
+                  enCours = false;
+                  erreur = err;
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Envoyer un message'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: messageController,
+                      maxLines: 4,
+                      maxLength: 2000,
+                      decoration: const InputDecoration(
+                        hintText: 'Décrivez votre problème ou votre question...',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Message requis' : null,
+                    ),
+                    if (erreur != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        erreur!,
+                        style: const TextStyle(
+                          color: CleanCouleurs.rougeAlerte,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: enCours ? null : () => Navigator.pop(dialogContext),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco),
+                  onPressed: enCours ? null : envoyer,
+                  child: enCours
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text('Envoyer', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
