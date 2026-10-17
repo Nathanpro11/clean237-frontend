@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:clean237_frontend/features/utilisateur/models/utilisateur_model.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/auth_repository.dart';
 import 'package:clean237_frontend/utils/api_client.dart';
@@ -8,6 +9,10 @@ class AuthController extends ChangeNotifier {
   final AuthRepository _repository;
 
   AuthController(this._repository);
+
+  static const bool _horsLigne = bool.fromEnvironment('OFFLINE');
+  static const String _cleToken = 'jwt_clean237';
+  final FlutterSecureStorage _stockage = const FlutterSecureStorage();
 
   UtilisateurModel? _utilisateurConnecte;
   String? _tokenJwt;
@@ -36,6 +41,46 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _effacerJetonStocke() async {
+    try {
+      await _stockage.delete(key: _cleToken);
+    } catch (_) {}
+  }
+
+  /// Au démarrage : relit le jeton stocké, vérifie son expiration puis appelle /me.
+  /// Retourne true si la session est restaurée. Jeton expiré ou refusé (401) : il est effacé.
+  Future<bool> restaurerSession() async {
+    if (_horsLigne) return false;
+    try {
+      final token = await _stockage.read(key: _cleToken);
+      if (token == null) return false;
+
+      final idUser = JwtHelper.decoderPayload(token)?['idUser']?.toString();
+      if (JwtHelper.estExpire(token) || idUser == null) {
+        await _effacerJetonStocke();
+        return false;
+      }
+
+      ApiClient.ouvrirSession(token: token, userId: idUser);
+      final data = await ApiClient.get('/utilisateurs/me');
+      final utilisateur = UtilisateurModel.fromJson(data as Map<String, dynamic>);
+
+      _tokenJwt = token;
+      _utilisateurConnecte = utilisateur;
+      _role = JwtHelper.extraireRole(token) ?? utilisateur.roleNom;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      ApiClient.fermerSession();
+      // 401 : jeton refusé. Autre erreur (réseau) : on garde le jeton pour la prochaine fois.
+      if (e.statusCode == 401) await _effacerJetonStocke();
+      return false;
+    } catch (_) {
+      ApiClient.fermerSession();
+      return false;
+    }
+  }
+
   Future<bool> login(String email, String motDepasse) async {
     _setChargement(true);
     _messageErreur = null;
@@ -49,6 +94,13 @@ class AuthController extends ChangeNotifier {
     _role = JwtHelper.extraireRole(resultat.token) ?? resultat.utilisateur?.roleNom;
     _messageErreur = resultat.messageErreur;
     _estBloqueAntiBruteforce = resultat.estBloqueAntiBruteforce;
+
+    if (resultat.succes && resultat.token != null && !_horsLigne) {
+      try {
+        await _stockage.write(key: _cleToken, value: resultat.token);
+      } catch (_) {}
+    }
+
     _setChargement(false);
     return resultat.succes;
   }
@@ -139,6 +191,7 @@ class AuthController extends ChangeNotifier {
 
   void logout() {
     ApiClient.fermerSession();
+    _effacerJetonStocke();
     _utilisateurConnecte = null;
     _tokenJwt = null;
     _role = null;
