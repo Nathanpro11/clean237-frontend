@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:clean237_frontend/main.dart';
 
 void main() {
-  testWidgets('L\'application se lance sans erreur', (WidgetTester tester) async {
+  testWidgets('L\'application se lance sans erreur', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const Clean237App());
     await tester.pumpAndSettle();
     // Vérifie simplement que le widget racine s'est construit sans exception.
