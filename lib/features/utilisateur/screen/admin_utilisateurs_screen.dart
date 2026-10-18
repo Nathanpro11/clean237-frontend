@@ -34,6 +34,8 @@ class _AdminUtilisateursContenu extends StatefulWidget {
 }
 
 class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
+  String _filtreStatut = 'tous'; // tous / actifs / inactifs
+
   @override
   void initState() {
     super.initState();
@@ -222,7 +224,12 @@ class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminController>();
-    final utilisateurs = admin.utilisateurs;
+    final tous = admin.utilisateurs;
+    final utilisateurs = switch (_filtreStatut) {
+      'actifs' => tous.where((u) => u.estActif).toList(),
+      'inactifs' => tous.where((u) => !u.estActif).toList(),
+      _ => tous,
+    };
 
     return Scaffold(
       backgroundColor: CleanCouleurs.grisFond,
@@ -243,7 +250,7 @@ class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
           ),
         ],
       ),
-      body: utilisateurs.isEmpty
+      body: tous.isEmpty
           ? Center(
               child: admin.enChargement
                   ? const CircularProgressIndicator(color: CleanCouleurs.vertEco)
@@ -272,9 +279,37 @@ class _AdminUtilisateursContenuState extends State<_AdminUtilisateursContenu> {
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
-                _buildTableau(utilisateurs),
+                _buildFiltres(),
+                const SizedBox(height: 12),
+                if (utilisateurs.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: Text('Aucun compte pour ce filtre.', style: TextStyle(color: Colors.grey))),
+                  )
+                else
+                  _buildTableau(utilisateurs),
               ],
             ),
+    );
+  }
+
+  Widget _buildFiltres() {
+    Widget bouton(String valeur, String libelle) {
+      return ChoiceChip(
+        label: Text(libelle),
+        selected: _filtreStatut == valeur,
+        selectedColor: CleanCouleurs.vertEco.withAlpha(40),
+        onSelected: (_) => setState(() => _filtreStatut = valeur),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      children: [
+        bouton('tous', 'Tous'),
+        bouton('actifs', 'Actifs'),
+        bouton('inactifs', 'Inactifs'),
+      ],
     );
   }
 
