@@ -168,10 +168,11 @@ class _HistoriqueContenuState extends State<_HistoriqueContenu> {
                           children: [
                             Icon(Icons.wifi_tethering, color: Colors.grey.shade500, size: 13),
                             const SizedBox(width: 4),
-                            Text(
+                            Expanded(child: Text(
                               'IP: ${log.ipAddress}',
                               style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                            ),
+                              overflow: TextOverflow.ellipsis,
+                            )),
                             const Spacer(),
                             Text(
                               _formaterDate(log.createdAt),
