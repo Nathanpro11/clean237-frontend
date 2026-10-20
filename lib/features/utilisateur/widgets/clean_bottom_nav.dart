@@ -8,6 +8,8 @@ import 'package:clean237_frontend/features/utilisateur/screen/admin_dashboard_sc
 import 'package:clean237_frontend/features/utilisateur/screen/historique_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/module_indisponible_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/profil_screen.dart';
+import 'package:clean237_frontend/features/signalement/screen/citoyen_home_screen.dart';
+import 'package:clean237_frontend/features/signalement/screen/agent_home_screen.dart';
 
 /// Barre de navigation commune à tous les écrans principaux :
 /// Accueil, Collectes, Signaler, Historique, Profil.
@@ -40,7 +42,12 @@ class CleanBottomNav extends StatelessWidget {
         ecran = const ModuleIndisponibleScreen(titre: 'Collectes', indexNavigation: 1);
         break;
       case 2:
-        ecran = const ModuleIndisponibleScreen(titre: 'Signaler', indexNavigation: 2);
+        final role = context.read<AuthController>().role;
+        ecran = role == 'agent'
+            ? const AgentHomeScreen()
+            : role == 'admin'
+                ? const ModuleIndisponibleScreen(titre: 'Signaler', indexNavigation: 2)
+                : const CitoyenHomeScreen();
         break;
       case 3:
         ecran = const HistoriqueScreen();
