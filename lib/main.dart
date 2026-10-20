@@ -31,6 +31,7 @@ import 'package:clean237_frontend/features/utilisateur/repository/fake_citoyen_r
 import 'package:clean237_frontend/features/utilisateur/repository/prefs_parametres_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/repository/utilisateurs_store.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/splash_screen.dart';
+import 'package:clean237_frontend/features/signalement/controller/signalement_controller.dart';
 
 /// Mode démo sans serveur : flutter run --dart-define=OFFLINE=true
 const bool kModeHorsLigne = bool.fromEnvironment('OFFLINE');
@@ -77,6 +78,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AgentController(agentRepo)),
         ChangeNotifierProvider(create: (_) => CitoyenController(citoyenRepo)),
         ChangeNotifierProvider(create: (_) => ParametresController(SharedPrefsParametresRepository())),
+        ChangeNotifierProvider(create: (_) => SignalementController()),
         RepositoryProvider<admin.AdminRepository>(
           create: (_) => admin.AdminRepository(dataSource: sourceAdmin),
         ),
