@@ -8,6 +8,7 @@ import 'package:clean237_frontend/features/utilisateur/models/agent_stats_model.
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
+import 'package:clean237_frontend/features/signalement/screen/agent_home_screen.dart';
 
 /// Tableau de bord de l'Agent de terrain. Pure View : tout vient d'AgentController (ViewModel),
 /// donc du backend. Les missions et collectes seront ajoutées avec leur module.
@@ -135,6 +136,13 @@ class _DashboardContenuState extends State<_DashboardContenu> {
           _buildSecteurAgent(stats),
           const SizedBox(height: 14),
           _buildStatsAgent(stats),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentHomeScreen())),
+            icon: const Icon(Icons.assignment_turned_in_outlined, color: Colors.white),
+            label: const Text('Signalements à traiter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(backgroundColor: CleanCouleurs.vertEco, padding: const EdgeInsets.symmetric(vertical: 14), elevation: 0),
+          ),
           const SizedBox(height: 14),
           _buildInfoMissions(),
         ],
