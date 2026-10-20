@@ -11,15 +11,21 @@ import 'package:clean237_frontend/features/utilisateur/screen/profil_screen.dart
 import 'package:clean237_frontend/features/signalement/screen/citoyen_home_screen.dart';
 import 'package:clean237_frontend/features/signalement/screen/agent_home_screen.dart';
 
-/// Barre de navigation commune à tous les écrans principaux :
-/// Accueil, Collectes, Signaler, Historique, Profil.
-/// L'onglet "Accueil" s'adapte au rôle connecté : citoyen -> AccueilScreen,
+/// Barre de navigation commune aux écrans principaux.
+/// Index des onglets : 0 Accueil, 1 Collectes, 2 Signaler, 3 Historique, 4 Profil.
+/// L'onglet "Accueil" s'adapte au rôle : citoyen -> AccueilScreen,
 /// agent -> DashboardScreen, admin -> AdminDashboardScreen.
+/// L'admin ne voit ni "Collectes" ni "Signaler" : il consulte les alertes et
+/// les signalements depuis son propre tableau de bord.
 /// Utilise pushReplacement pour éviter d'empiler les écrans indéfiniment.
 class CleanBottomNav extends StatelessWidget {
+  /// Index d'onglet de l'écran courant (0 à 4), même pour l'admin.
   final int currentIndex;
 
   const CleanBottomNav({super.key, required this.currentIndex});
+
+  static const List<int> _ongletsTous = [0, 1, 2, 3, 4];
+  static const List<int> _ongletsAdmin = [0, 3, 4];
 
   Widget _ecranAccueilPourRole(BuildContext context) {
     final role = context.read<AuthController>().role;
@@ -65,21 +71,27 @@ class CleanBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final role = context.watch<AuthController>().role;
+    final visibles = role == 'admin' ? _ongletsAdmin : _ongletsTous;
+
+    final items = <int, BottomNavigationBarItem>{
+      0: const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
+      1: const BottomNavigationBarItem(icon: Icon(Icons.local_shipping_outlined), label: 'Collectes'),
+      2: const BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Signaler'),
+      3: const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historique'),
+      4: const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+    };
+
+    final position = visibles.indexOf(currentIndex);
+
     return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) => _naviguer(context, index),
+      currentIndex: position < 0 ? 0 : position,
+      onTap: (position) => _naviguer(context, visibles[position]),
       type: BottomNavigationBarType.fixed,
       selectedItemColor: CleanCouleurs.vertEco,
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.local_shipping_outlined), label: 'Collectes'),
-        BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Signaler'),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historique'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
-      ],
+      items: [for (final index in visibles) items[index]!],
     );
   }
 }
-
