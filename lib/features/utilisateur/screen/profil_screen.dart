@@ -112,10 +112,10 @@ class _ProfilContenu extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              const Expanded(child: Text(
                 'Informations personnelles',
-                style: TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.bold, fontSize: 14),
-              ),
+                style: TextStyle(color: CleanCouleurs.anthracite, fontWeight: FontWeight.bold, fontSize: 14, ),
+              )),
               TextButton.icon(
                 onPressed: () => _ouvrirDialogueModifierProfil(context, nom, telephone),
                 icon: const Icon(Icons.edit_outlined, size: 16, color: CleanCouleurs.vertEco),
