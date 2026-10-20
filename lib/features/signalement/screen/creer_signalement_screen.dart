@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
 import '../data/constants.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class CreerSignalementScreen extends StatefulWidget {
   const CreerSignalementScreen({super.key});
@@ -13,7 +15,7 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _precisionController = TextEditingController();
-  String? _quartierChoisi;
+  String? _quartierSaisi;
   String? _photoUrl; // simule l'upload, pas de vrai stockage de fichier encore
 
   @override
@@ -43,10 +45,13 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
               ),
               const SizedBox(height: 8),
               InkWell(
-                onTap: () => setState(
-                  () => _photoUrl =
-                      'https://exemple.com/photo-${DateTime.now().millisecondsSinceEpoch}.jpg',
-                ),
+                onTap: () async {
+                  final photo = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 70,
+                  );
+                  if (photo != null) setState(() => _photoUrl = photo.path);
+                },
                 child: Container(
                   height: 140,
                   decoration: BoxDecoration(
@@ -58,26 +63,28 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _photoUrl == null
-                            ? Icons.camera_alt_outlined
-                            : Icons.check_circle,
-                        color: _photoUrl == null
-                            ? Colors.grey
-                            : const Color(0xFF27AE60),
-                        size: 28,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _photoUrl == null
-                            ? 'Ajouter une photo'
-                            : 'Photo ajoutée',
-                      ),
-                    ],
-                  ),
+                  child: _photoUrl == null
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.grey,
+                              size: 28,
+                            ),
+                            SizedBox(height: 8),
+                            Text('Ajouter une photo'),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.file(
+                            File(_photoUrl!),
+                            height: 140,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -86,21 +93,34 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _quartierChoisi,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFFF5F6F4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: quartiersDisponibles
-                    .map((q) => DropdownMenuItem(value: q, child: Text(q)))
-                    .toList(),
-                onChanged: (v) => setState(() => _quartierChoisi = v),
-                validator: (v) =>
-                    v == null ? 'Le quartier est obligatoire' : null,
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue v) {
+                  if (v.text.isEmpty) return quartiersDisponibles;
+                  return quartiersDisponibles.where(
+                    (q) => q.contains(v.text.toUpperCase()),
+                  );
+                },
+                onSelected: (s) => _quartierSaisi = s,
+                fieldViewBuilder:
+                    (context, controller, focusNode, onSubmitted) {
+                      return TextFormField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        inputFormatters: [MajusculeFormatter()],
+                        onChanged: (v) => _quartierSaisi = v,
+                        decoration: InputDecoration(
+                          hintText: 'Ex : BASTOS',
+                          filled: true,
+                          fillColor: const Color(0xFFF5F6F4),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Le quartier est obligatoire'
+                            : null,
+                      );
+                    },
               ),
               const SizedBox(height: 20),
               const Text(
@@ -178,7 +198,7 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
                           if (!_formKey.currentState!.validate()) return;
                           final succes = await controller.creerSignalement(
                             description: _descriptionController.text.trim(),
-                            quartier: _quartierChoisi!,
+                            quartier: _quartierSaisi!,
                             precision: _precisionController.text.trim(),
                             photoUrl: _photoUrl!,
                           );

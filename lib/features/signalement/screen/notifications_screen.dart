@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
+import '../data/temps_ecoule.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  final String destinataire;
+  const NotificationsScreen({super.key, required this.destinataire});
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
@@ -16,7 +18,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       () => Provider.of<SignalementController>(
         context,
         listen: false,
-      ).chargerNotifications('citoyen'),
+      ).chargerNotifications(widget.destinataire),
     );
   }
 
@@ -54,6 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     fontWeight: n.lu ? FontWeight.normal : FontWeight.bold,
                   ),
                 ),
+                subtitle: Text(tempsEcoule(n.dateEnvoi)),
                 onTap: () => controller.chargerNotifications('citoyen'),
               );
             },

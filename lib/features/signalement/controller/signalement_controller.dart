@@ -12,6 +12,10 @@ class SignalementController extends ChangeNotifier {
   List<Signalement> historiqueListe = [];
   List<AppNotification> notificationsListe = [];
 
+  int get notificationsNonLues => notificationsListe.where((n) => !n.lu).length;
+  int get signalementsNonTraites =>
+      aTraiterListe.where((s) => s.statut == 'en_attente').length;
+
   bool enChargement = false;
   String? messageErreur;
 

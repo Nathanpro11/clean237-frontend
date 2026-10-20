@@ -5,6 +5,7 @@ import '../data/signalement_service.dart';
 import '../models/signalement_model.dart';
 import '../widgets/statut_badge.dart';
 import 'modifier_signalement_screen.dart';
+import 'dart:io';
 
 class DetailSignalementScreen extends StatefulWidget {
   final String signalementId;
@@ -57,6 +58,26 @@ class _DetailSignalementScreenState extends State<DetailSignalementScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              height: 180,
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFFF5F6F4),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: s.photoUrl.startsWith('http')
+                    ? Image.network(s.photoUrl, fit: BoxFit.cover)
+                    : Image.file(
+                        File(s.photoUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Center(child: Text('Photo indisponible')),
+                      ),
+              ),
+            ),
             Text(s.description, style: const TextStyle(fontSize: 15)),
             const SizedBox(height: 12),
             Row(

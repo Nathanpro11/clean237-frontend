@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^1.1.2
 
   # Réseau et MVVM (module utilisateurs)
   http: ^1.2.0
