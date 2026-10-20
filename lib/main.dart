@@ -106,6 +106,15 @@ class Clean237App extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Segoe UI',
       ),
+      builder: (context, child) => ColoredBox(
+        color: CleanCouleurs.grisFond,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: child,
+          ),
+        ),
+      ),
       home: const SplashScreen(),
     );
   }
