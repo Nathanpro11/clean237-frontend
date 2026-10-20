@@ -9,6 +9,7 @@ import 'package:clean237_frontend/features/utilisateur/screen/module_indisponibl
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
+import 'package:clean237_frontend/features/signalement/screen/citoyen_home_screen.dart';
 
 /// Écran d'accueil (vue Citoyen). Toutes les valeurs affichées viennent du backend.
 /// Les signalements, collectes et points de fidélité seront ajoutés avec leurs modules :
@@ -180,7 +181,7 @@ class _AccueilContenuState extends State<_AccueilContenu> {
               child: _buildBoutonAction(
                 Icons.add_box_outlined,
                 'Signaler un dépôt',
-                () => _ouvrirModule('Signaler', 2),
+                () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CitoyenHomeScreen())),
               ),
             ),
             const SizedBox(width: 10),
