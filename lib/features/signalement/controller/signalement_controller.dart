@@ -12,9 +12,8 @@ class SignalementController extends ChangeNotifier {
   List<Signalement> historiqueListe = [];
   List<AppNotification> notificationsListe = [];
 
-  int get notificationsNonLues => notificationsListe.where((n) => !n.lu).length;
-  int get signalementsNonTraites =>
-      aTraiterListe.where((s) => s.statut == 'en_attente').length;
+  int notificationsNonLuesCompteur = 0;
+  int signalementsNonConsultesCompteur = 0;
 
   bool enChargement = false;
   String? messageErreur;
@@ -114,11 +113,21 @@ class SignalementController extends ChangeNotifier {
     notifyListeners();
     try {
       aTraiterListe = await _service.aTraiter(agentIdTest);
+      signalementsNonConsultesCompteur = aTraiterListe
+          .where((s) => s.statut == 'en_attente')
+          .length;
     } catch (e) {
       messageErreur = 'Impossible de charger';
     }
     enChargement = false;
     notifyListeners();
+  }
+
+  void marquerSignalementConsulte(String id) {
+    if (signalementsNonConsultesCompteur > 0) {
+      signalementsNonConsultesCompteur--;
+      notifyListeners();
+    }
   }
 
   Future<void> chargerHistoriqueAgent() async {
@@ -156,10 +165,20 @@ class SignalementController extends ChangeNotifier {
     notifyListeners();
     try {
       notificationsListe = await _service.listerNotifications(destinataire);
+      notificationsNonLuesCompteur = notificationsListe
+          .where((n) => !n.lu)
+          .length;
     } catch (e) {
       messageErreur = 'Impossible de charger';
     }
     enChargement = false;
+    notifyListeners();
+  }
+
+  Future<void> ouvrirNotifications(String destinataire) async {
+    await chargerNotifications(destinataire);
+    await _service.marquerToutesLues(destinataire);
+    notificationsNonLuesCompteur = 0;
     notifyListeners();
   }
 }

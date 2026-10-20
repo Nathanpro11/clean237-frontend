@@ -122,4 +122,12 @@ class SignalementService {
   Future<void> marquerLue(String id) async {
     await http.patch(Uri.parse('$baseUrl/notifications/$id/lu'));
   }
+
+  Future<void> marquerToutesLues(String destinataire) async {
+    await http.patch(
+      Uri.parse(
+        '$baseUrl/notifications/toutes-lues?destinataire=$destinataire',
+      ),
+    );
+  }
 }

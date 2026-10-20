@@ -18,7 +18,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       () => Provider.of<SignalementController>(
         context,
         listen: false,
-      ).chargerNotifications(widget.destinataire),
+      ).ouvrirNotifications(widget.destinataire),
     );
   }
 

@@ -44,12 +44,18 @@ class _AgentATraiterScreenState extends State<AgentATraiterScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AgentDetailScreen(signalement: s),
-                    ),
-                  ).then((_) => controller.chargerATraiter()),
+                  onTap: () {
+                    Provider.of<SignalementController>(
+                      context,
+                      listen: false,
+                    ).marquerSignalementConsulte(s.id);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AgentDetailScreen(signalement: s),
+                      ),
+                    ).then((_) => controller.chargerATraiter());
+                  },
                   title: Text(
                     s.description,
                     maxLines: 2,

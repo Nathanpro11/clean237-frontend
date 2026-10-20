@@ -41,8 +41,8 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
         items: [
           BottomNavigationBarItem(
             icon: Badge(
-              label: Text('${controller.signalementsNonTraites}'),
-              isLabelVisible: controller.signalementsNonTraites > 0,
+              label: Text('${controller.signalementsNonConsultesCompteur}'),
+              isLabelVisible: controller.signalementsNonConsultesCompteur > 0,
               child: const Icon(Icons.assignment_turned_in_outlined),
             ),
             label: 'A traiter',
@@ -53,8 +53,8 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Badge(
-              label: Text('${controller.notificationsNonLues}'),
-              isLabelVisible: controller.notificationsNonLues > 0,
+              label: Text('${controller.notificationsNonLuesCompteur}'),
+              isLabelVisible: controller.notificationsNonLuesCompteur > 0,
               child: const Icon(Icons.notifications_outlined),
             ),
             label: 'Notifications',

@@ -44,8 +44,8 @@ class _CitoyenHomeScreenState extends State<CitoyenHomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Badge(
-              label: Text('${controller.notificationsNonLues}'),
-              isLabelVisible: controller.notificationsNonLues > 0,
+              label: Text('${controller.notificationsNonLuesCompteur}'),
+              isLabelVisible: controller.notificationsNonLuesCompteur > 0,
               child: const Icon(Icons.notifications_outlined),
             ),
             label: 'Notifications',
