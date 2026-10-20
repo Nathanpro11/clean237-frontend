@@ -50,6 +50,9 @@ class ApiClient {
   static Future<dynamic> put(String chemin, Map<String, dynamic> corps) =>
       _appeler('PUT', chemin, corps: corps);
 
+  static Future<dynamic> patch(String chemin, [Map<String, dynamic>? corps]) =>
+      _appeler('PATCH', chemin, corps: corps);
+
   static Future<dynamic> _appeler(
     String methode,
     String chemin, {
@@ -62,6 +65,7 @@ class ApiClient {
       final appel = switch (methode) {
         'POST' => http.post(uri, headers: _headers(), body: json),
         'PUT' => http.put(uri, headers: _headers(), body: json),
+        'PATCH' => http.patch(uri, headers: _headers(), body: json),
         _ => http.get(uri, headers: _headers()),
       };
       final reponse = await appel.timeout(_delai);
