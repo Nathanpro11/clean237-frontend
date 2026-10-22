@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
+import '../../geolocalisation/screen/carte_screen.dart';
 import 'liste_signalements_screen.dart';
 import 'notifications_screen.dart';
 
@@ -14,6 +15,7 @@ class _CitoyenHomeScreenState extends State<CitoyenHomeScreen> {
   int index = 0;
   final screens = const [
     ListeSignalementsScreen(),
+    CarteScreen(),
     NotificationsScreen(destinataire: 'citoyen'),
   ];
 
@@ -41,6 +43,10 @@ class _CitoyenHomeScreenState extends State<CitoyenHomeScreen> {
           const BottomNavigationBarItem(
             icon: Icon(Icons.assignment_outlined),
             label: 'Signalements',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            label: 'Carte',
           ),
           BottomNavigationBarItem(
             icon: Badge(
