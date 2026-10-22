@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
 import '../models/signalement_model.dart';
 import '../widgets/statut_badge.dart';
+import '../../geolocalisation/widgets/mini_carte.dart';
 
 class AgentDetailScreen extends StatelessWidget {
   final Signalement signalement;
@@ -78,6 +79,13 @@ class AgentDetailScreen extends StatelessWidget {
             Text(
               '${signalement.quartier}${signalement.precision != null ? " - ${signalement.precision}" : ""}',
             ),
+            if (signalement.aUnePosition) ...[
+              const SizedBox(height: 10),
+              MiniCarte(
+                latitude: signalement.latitude!,
+                longitude: signalement.longitude!,
+              ),
+            ],
             const SizedBox(height: 10),
             StatutBadge(statut: signalement.statut),
             const SizedBox(height: 24),
