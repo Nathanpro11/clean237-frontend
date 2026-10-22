@@ -5,6 +5,8 @@ class Signalement {
   final String photoUrl;
   final String quartier;
   final String? precision;
+  final double? latitude;
+  final double? longitude;
   final String? motifRejet;
   final bool archive;
   final String citoyenId;
@@ -18,12 +20,16 @@ class Signalement {
     required this.photoUrl,
     required this.quartier,
     this.precision,
+    this.latitude,
+    this.longitude,
     this.motifRejet,
     required this.archive,
     required this.citoyenId,
     this.agentId,
     required this.dateCreation,
   });
+
+  bool get aUnePosition => latitude != null && longitude != null;
 
   factory Signalement.fromJson(Map<String, dynamic> json) {
     return Signalement(
@@ -33,6 +39,8 @@ class Signalement {
       photoUrl: json['photoUrl'] ?? '',
       quartier: json['quartier'] ?? '',
       precision: json['precision'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       motifRejet: json['motifRejet'],
       archive: json['archive'] ?? false,
       citoyenId: json['citoyenId'] ?? '',
@@ -42,7 +50,7 @@ class Signalement {
   }
 
   Map<String, dynamic> toJson() {
-    final data = {
+    final data = <String, dynamic>{
       'description': description,
       'citoyenId': citoyenId,
       'photoUrl': photoUrl,
@@ -50,6 +58,10 @@ class Signalement {
     };
     if (precision != null && precision!.trim().isNotEmpty) {
       data['precision'] = precision!;
+    }
+    if (latitude != null && longitude != null) {
+      data['latitude'] = latitude;
+      data['longitude'] = longitude;
     }
     return data;
   }
