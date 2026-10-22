@@ -8,6 +8,7 @@ class GeolocalisationController extends ChangeNotifier {
   final GeolocalisationService _service = GeolocalisationService();
 
   List<Bac> bacs = [];
+  List<ZoneSimple> zones = [];
   LatLng? position;
   bool enChargement = false;
   String? messageErreur;
@@ -24,6 +25,56 @@ class GeolocalisationController extends ChangeNotifier {
     }
     enChargement = false;
     notifyListeners();
+  }
+
+  Future<void> chargerZones() async {
+    try {
+      zones = await _service.zones();
+      notifyListeners();
+    } catch (e) {
+      messageErreur = 'Impossible de charger les zones';
+      notifyListeners();
+    }
+  }
+
+  Future<bool> creerBac(Map<String, dynamic> donnees) async {
+    try {
+      await _service.creerBac(donnees);
+      messageErreur = null;
+      await charger();
+      return true;
+    } catch (e) {
+      messageErreur = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> modifierBac(String id, Map<String, dynamic> donnees) async {
+    try {
+      await _service.modifierBac(id, donnees);
+      messageErreur = null;
+      await charger();
+      return true;
+    } catch (e) {
+      messageErreur = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> supprimerBac(String id) async {
+    try {
+      await _service.supprimerBac(id);
+      bacs.removeWhere((b) => b.id == id);
+      messageErreur = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      messageErreur = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<void> localiser() async {
