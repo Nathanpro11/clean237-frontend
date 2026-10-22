@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
 import '../data/constants.dart';
+import '../../geolocalisation/data/position_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -19,6 +20,28 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
   String? _quartierSaisi;
   String? _photoUrl; // simule l'upload, pas de vrai stockage de fichier encore
   String? _photoData;
+  double? _latitude;
+  double? _longitude;
+  bool _positionEnCours = false;
+
+  Future<void> _prendrePosition() async {
+    setState(() => _positionEnCours = true);
+    try {
+      final p = await PositionService.positionActuelle();
+      if (!mounted) return;
+      setState(() {
+        _latitude = p.latitude;
+        _longitude = p.longitude;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _positionEnCours = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +156,44 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
               ),
               const SizedBox(height: 20),
               const Text(
+                'Position GPS (optionnel)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _positionEnCours ? null : _prendrePosition,
+                  icon: _positionEnCours
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _latitude == null
+                              ? Icons.my_location
+                              : Icons.check_circle,
+                          color: const Color(0xFF27AE60),
+                        ),
+                  label: Text(
+                    _latitude == null
+                        ? 'Utiliser ma position'
+                        : 'Position enregistrée (${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)})',
+                    style: const TextStyle(color: Color(0xFF27AE60)),
+                  ),
+                ),
+              ),
+              if (_latitude != null)
+                TextButton(
+                  onPressed: () => setState(() {
+                    _latitude = null;
+                    _longitude = null;
+                  }),
+                  child: const Text('Retirer la position'),
+                ),
+              const SizedBox(height: 20),
+              const Text(
                 'Précision (optionnel)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -166,11 +227,13 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
                   ),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'La description est obligatoire';
+                  }
                   if (v.trim().length < 5) return 'Au moins 5 caractères';
-                  if (v.trim().split(RegExp(r'\s+')).length > 200)
+                  if (v.trim().split(RegExp(r'\s+')).length > 200) {
                     return 'Maximum 200 mots';
+                  }
                   return null;
                 },
               ),
@@ -210,6 +273,8 @@ class _CreerSignalementScreenState extends State<CreerSignalementScreen> {
                             quartier: _quartierSaisi!,
                             precision: _precisionController.text.trim(),
                             photoUrl: _photoData ?? _photoUrl!,
+                            latitude: _latitude,
+                            longitude: _longitude,
                           );
                           if (succes && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
