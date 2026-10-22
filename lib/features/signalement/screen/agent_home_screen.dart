@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
+import '../../geolocalisation/screen/carte_screen.dart';
 import 'agent_a_traiter_screen.dart';
 import 'agent_historiques_screen.dart';
 import 'notifications_screen.dart';
@@ -16,6 +17,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
   final screens = const [
     AgentATraiterScreen(),
     AgentHistoriqueScreen(),
+    CarteScreen(),
     NotificationsScreen(destinataire: 'agent'),
   ];
 
@@ -35,6 +37,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
     return Scaffold(
       body: screens[index],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: index,
         selectedItemColor: const Color(0xFF27AE60),
         onTap: (i) => setState(() => index = i),
@@ -50,6 +53,10 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
           const BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Historique',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            label: 'Carte',
           ),
           BottomNavigationBarItem(
             icon: Badge(
