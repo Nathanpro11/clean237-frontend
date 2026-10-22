@@ -37,6 +37,8 @@ class SignalementController extends ChangeNotifier {
     required String quartier,
     String? precision,
     required String photoUrl,
+    double? latitude,
+    double? longitude,
   }) async {
     enChargement = true;
     messageErreur = null;
@@ -47,6 +49,8 @@ class SignalementController extends ChangeNotifier {
         description: description,
         statut: 'en_attente',
         photoUrl: photoUrl,
+        latitude: latitude,
+        longitude: longitude,
         quartier: quartier,
         precision: precision,
         archive: false,
