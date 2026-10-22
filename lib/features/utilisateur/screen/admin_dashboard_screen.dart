@@ -6,6 +6,7 @@ import 'package:clean237_frontend/features/utilisateur/controller/admin_controll
 import 'package:clean237_frontend/features/utilisateur/repository/admin_repository.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/admin_module_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/screen/admin_utilisateurs_screen.dart';
+import 'package:clean237_frontend/features/geolocalisation/screen/admin_bacs_screen.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/garde_acces.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/sidebar_menu.dart';
 import 'package:clean237_frontend/features/utilisateur/widgets/clean_bottom_nav.dart';
@@ -197,6 +198,13 @@ class _AdminDashboardContenuState extends State<_AdminDashboardContenu> {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
+                  _BoutonModule(
+                    icone: Icons.delete_outline,
+                    libelle: 'Bacs à ordure',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const AdminBacsScreen()),
+                    ),
+                  ),
                   _BoutonModule(
                     icone: Icons.map_outlined,
                     libelle: 'Zones',
