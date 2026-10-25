@@ -57,4 +57,6 @@ class SignalementService {
   }
 
   Future<void> marquerLue(String id) => ApiClient.patch('/v1/notifications/$id/lu');
+
+  Future<void> marquerToutesLues() => ApiClient.patch('/v1/notifications/toutes-lues');
 }
