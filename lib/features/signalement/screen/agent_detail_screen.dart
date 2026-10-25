@@ -1,11 +1,13 @@
 import '../widgets/contenu_adaptatif.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../controller/signalement_controller.dart';
 import '../models/signalement_model.dart';
 import '../widgets/statut_badge.dart';
 import '../../geolocalisation/widgets/mini_carte.dart';
+import '../../geolocalisation/screen/itineraire_screen.dart';
 
 class AgentDetailScreen extends StatelessWidget {
   final Signalement signalement;
@@ -88,6 +90,30 @@ class AgentDetailScreen extends StatelessWidget {
             ],
             const SizedBox(height: 10),
             StatutBadge(statut: signalement.statut),
+            if (signalement.aUnePosition) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ItineraireScreen(
+                        destination: LatLng(
+                          signalement.latitude!,
+                          signalement.longitude!,
+                        ),
+                        titre: 'Signalement ${signalement.quartier}',
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.directions, color: Color(0xFF27AE60)),
+                  label: const Text(
+                    'Itinéraire',
+                    style: TextStyle(color: Color(0xFF27AE60)),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
