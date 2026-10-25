@@ -154,6 +154,43 @@ class SignalementController extends ChangeNotifier {
   }
 
   // ---------- Notifications ----------
+  void _definirLu(String id, bool lu) {
+    final i = notificationsListe.indexWhere((n) => n.id == id);
+    if (i == -1) return;
+    notificationsListe[i] = notificationsListe[i].copyWith(lu: lu);
+    notifyListeners();
+  }
+
+  Future<void> marquerNotificationLue(String id) async {
+    final trouvees = notificationsListe.where((n) => n.id == id);
+    if (trouvees.isEmpty || trouvees.first.lu) return;
+    _definirLu(id, true);
+    try {
+      await _service.marquerLue(id);
+    } catch (e) {
+      _definirLu(id, false);
+    }
+  }
+
+  Future<void> marquerToutesNotificationsLues() async {
+    if (notificationsNonLues == 0) return;
+    notificationsListe = notificationsListe.map((n) => n.copyWith(lu: true)).toList();
+    notifyListeners();
+    try {
+      await _service.marquerToutesLues();
+    } catch (e) {
+      await chargerNotifications();
+    }
+  }
+
+  Future<Signalement?> chargerSignalement(String id) async {
+    try {
+      return await _service.getSignalementParId(id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> chargerNotifications([String? destinataire]) async {
     enChargement = true;
     notifyListeners();
